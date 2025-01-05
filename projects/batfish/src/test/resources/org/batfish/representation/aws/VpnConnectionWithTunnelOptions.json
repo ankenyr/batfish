@@ -1,0 +1,256 @@
+{
+  "VpnConnections": [
+    {
+      "Category": "VPN",
+      "CustomerGatewayConfiguration": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><vpn_connection id=\"vpn-04beebe390f8a0982\">\n  <customer_gateway_id>cgw-0bc2e5c6d2bd7a256</customer_gateway_id>\n  <vpn_gateway_id></vpn_gateway_id>\n  <vpn_connection_type>ipsec.1</vpn_connection_type>\n  <ipsec_tunnel>\n    <customer_gateway>\n      <tunnel_outside_address>\n        <ip_address>2.2.2.2</ip_address>\n      </tunnel_outside_address>\n      <tunnel_inside_address>\n        <ip_address>169.254.65.62</ip_address>\n        <network_mask>255.255.255.252</network_mask>\n        <network_cidr>30</network_cidr>\n      </tunnel_inside_address>\n      <bgp>\n        <asn>65000</asn>\n        <hold_time>30</hold_time>\n      </bgp>\n    </customer_gateway>\n    <vpn_gateway>\n      <tunnel_outside_address>\n        <ip_address>3.3.3.3</ip_address>\n      </tunnel_outside_address>\n      <tunnel_inside_address>\n        <ip_address>169.254.65.61</ip_address>\n        <network_mask>255.255.255.252</network_mask>\n        <network_cidr>30</network_cidr>\n      </tunnel_inside_address>\n      <bgp>\n        <asn>64512</asn>\n        <hold_time>30</hold_time>\n      </bgp>\n    </vpn_gateway>\n    <ike>\n      <authentication_protocol>sha1</authentication_protocol>\n      <encryption_protocol>aes-256-cbc</encryption_protocol>\n      <lifetime>28800</lifetime>\n      <perfect_forward_secrecy>group2</perfect_forward_secrecy>\n      <mode>main</mode>\n      <pre_shared_key>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</pre_shared_key>\n    </ike>\n    <ipsec>\n      <protocol>esp</protocol>\n      <authentication_protocol>hmac-sha1-96</authentication_protocol>\n      <encryption_protocol>aes-256-cbc</encryption_protocol>\n      <lifetime>3600</lifetime>\n      <perfect_forward_secrecy>group2</perfect_forward_secrecy>\n      <mode>tunnel</mode>\n      <clear_df_bit>true</clear_df_bit>\n      <fragmentation_before_encryption>true</fragmentation_before_encryption>\n      <tcp_mss_adjustment>1379</tcp_mss_adjustment>\n      <dead_peer_detection>\n        <interval>10</interval>\n        <retries>3</retries>\n      </dead_peer_detection>\n    </ipsec>\n  </ipsec_tunnel>\n  <ipsec_tunnel>\n    <customer_gateway>\n      <tunnel_outside_address>\n        <ip_address>2.2.2.2</ip_address>\n      </tunnel_outside_address>\n      <tunnel_inside_address>\n        <ip_address>169.254.84.18</ip_address>\n        <network_mask>255.255.255.252</network_mask>\n        <network_cidr>30</network_cidr>\n      </tunnel_inside_address>\n      <bgp>\n        <asn>65000</asn>\n        <hold_time>30</hold_time>\n      </bgp>\n    </customer_gateway>\n    <vpn_gateway>\n      <tunnel_outside_address>\n        <ip_address>54.203.48.37</ip_address>\n      </tunnel_outside_address>\n      <tunnel_inside_address>\n        <ip_address>169.254.84.17</ip_address>\n        <network_mask>255.255.255.252</network_mask>\n        <network_cidr>30</network_cidr>\n      </tunnel_inside_address>\n      <bgp>\n        <asn>64512</asn>\n        <hold_time>30</hold_time>\n      </bgp>\n    </vpn_gateway>\n    <ike>\n      <authentication_protocol>sha1</authentication_protocol>\n      <encryption_protocol>aes-256-cbc</encryption_protocol>\n      <lifetime>28800</lifetime>\n      <perfect_forward_secrecy>group2</perfect_forward_secrecy>\n      <mode>main</mode>\n      <pre_shared_key>aaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaa</pre_shared_key>\n    </ike>\n    <ipsec>\n      <protocol>esp</protocol>\n      <authentication_protocol>hmac-sha1-96</authentication_protocol>\n      <encryption_protocol>aes-256-cbc</encryption_protocol>\n      <lifetime>3600</lifetime>\n      <perfect_forward_secrecy>group2</perfect_forward_secrecy>\n      <mode>tunnel</mode>\n      <clear_df_bit>true</clear_df_bit>\n      <fragmentation_before_encryption>true</fragmentation_before_encryption>\n      <tcp_mss_adjustment>1379</tcp_mss_adjustment>\n      <dead_peer_detection>\n        <interval>10</interval>\n        <retries>3</retries>\n      </dead_peer_detection>\n    </ipsec>\n  </ipsec_tunnel>\n</vpn_connection>\n",
+      "CustomerGatewayId": "cgw-0bc2e5c6d2bd7a256",
+      "GatewayAssociationState": "associated",
+      "Options": {
+        "EnableAcceleration": false,
+        "LocalIpv4NetworkCidr": "0.0.0.0/0",
+        "OutsideIpAddressType": "PublicIpv4",
+        "RemoteIpv4NetworkCidr": "0.0.0.0/0",
+        "StaticRoutesOnly": false,
+        "TunnelInsideIpVersion": "ipv4",
+        "TunnelOptions": [
+          {
+            "DpdTimeoutAction": "clear",
+            "EnableTunnelLifecycleControl": false,
+            "IkeVersions": [
+              {
+                "Value": "ikev1"
+              },
+              {
+                "Value": "ikev2"
+              }
+            ],
+            "LogOptions": {
+              "CloudWatchLogOptions": {
+                "LogEnabled": false,
+                "LogGroupArn": "",
+                "LogOutputFormat": "json"
+              }
+            },
+            "OutsideIpAddress": "3.3.3.3",
+            "Phase1DHGroupNumbers": [
+              {
+                "Value": 2
+              },
+              {
+                "Value": 14
+              },
+              {
+                "Value": 15
+              },
+              {
+                "Value": 16
+              },
+              {
+                "Value": 17
+              },
+              {
+                "Value": 18
+              },
+              {
+                "Value": 19
+              },
+              {
+                "Value": 20
+              },
+
+              {
+                "Value": 21
+              },
+              {
+                "Value": 22
+              },
+              {
+                "Value": 23
+              },
+              {
+                "Value": 24
+              }
+            ],
+            "Phase1EncryptionAlgorithms": [
+              {
+                "Value": "AES256"
+              },
+              {
+                "Value": "AES128"
+              },
+              {
+                "Value": "AES128-GCM-16"
+              },
+              {
+                "Value": "AES256-GCM-16"
+              }
+            ],
+            "Phase1IntegrityAlgorithms": [
+              {
+                "Value": "SHA2-256"
+              },
+              {
+                "Value": "SHA1"
+              },
+              {
+                "Value": "SHA2-384"
+              },
+              {
+                "Value": "SHA2-512"
+              }
+            ],
+            "Phase2DHGroupNumbers": [
+              {
+                "Value": 2
+              },
+              {
+                "Value": 5
+              },
+              {
+                "Value": 14
+              },
+
+              {
+                "Value": 14
+              },
+              {
+                "Value": 15
+              },
+              {
+                "Value": 16
+              },
+              {
+                "Value": 17
+              },
+              {
+                "Value": 18
+              },
+              {
+                "Value": 19
+              },
+              {
+                "Value": 20
+              },
+              {
+                "Value": 21
+              },
+              {
+                "Value": 23
+              },
+              {
+                "Value": 22
+              },
+              {
+                "Value": 24
+              }
+            ],
+            "Phase2EncryptionAlgorithms": [
+              {
+                "Value": "AES256"
+              },
+              {
+                "Value": "AES256-GCM-16"
+              },
+              {
+                "Value": "AES128-GCM-16"
+              },
+              {
+                "Value": "AES128"
+              }
+            ],
+            "Phase2IntegrityAlgorithms": [
+              {
+                "Value": "SHA2-256"
+              },
+              {
+                "Value": "SHA1"
+              },
+              {
+                "Value": "SHA2-384"
+              },
+              {
+                "Value": "SHA2-512"
+              }
+            ],
+            "PreSharedKey": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "StartupAction": "add",
+            "TunnelInsideCidr": "169.254.65.60/30"
+          },
+          {
+            "DpdTimeoutAction": "clear",
+            "EnableTunnelLifecycleControl": false,
+            "IkeVersions": [
+              {
+                "Value": "ikev1"
+              },
+              {
+                "Value": "ikev2"
+              }
+            ],
+            "LogOptions": {
+              "CloudWatchLogOptions": {
+                "LogEnabled": false
+              }
+            },
+            "OutsideIpAddress": "54.203.48.37",
+            "Phase1DHGroupNumbers": [
+              {
+                "Value": 14
+              }
+            ],
+            "Phase1EncryptionAlgorithms": [
+              {
+                "Value": "AES256"
+              }
+            ],
+            "Phase1IntegrityAlgorithms": [
+              {
+                "Value": "SHA2-256"
+              }
+            ],
+            "Phase2DHGroupNumbers": [
+              {
+                "Value": 14
+              }
+            ],
+            "Phase2EncryptionAlgorithms": [
+              {
+                "Value": "AES256"
+              }
+            ],
+            "Phase2IntegrityAlgorithms": [
+              {
+                "Value": "SHA2-256"
+              }
+            ],
+            "PreSharedKey": "aaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "StartupAction": "add",
+            "TunnelInsideCidr": "169.254.84.16/30"
+          }
+        ]
+      },
+      "Routes": [],
+      "State": "available",
+      "Tags": [],
+      "TransitGatewayId": "tgw-00036d953cf5228e6",
+      "Type": "ipsec.1",
+      "VgwTelemetry": [
+        {
+          "AcceptedRouteCount": 0,
+          "LastStatusChange": "2024-12-14 07:17:09+00:00",
+          "OutsideIpAddress": "3.3.3.3",
+          "Status": "DOWN",
+          "StatusMessage": "IPSEC IS UP"
+        },
+        {
+          "AcceptedRouteCount": 0,
+          "LastStatusChange": "2024-12-14 01:03:14+00:00",
+          "OutsideIpAddress": "54.203.48.37",
+          "Status": "DOWN",
+          "StatusMessage": "IPSEC IS DOWN"
+        }
+      ],
+      "VpnConnectionId": "vpn-04beebe390f8a0982"
+    }
+  ]
+}

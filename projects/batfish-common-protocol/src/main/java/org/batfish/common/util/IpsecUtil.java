@@ -303,6 +303,9 @@ public class IpsecUtil {
     if (initiatorIpsecP2policy == null || responderIpsecP2Policy == null) {
       return;
     }
+    if (initiatorIpsecP2policy.getPfsKeyGroup() != responderIpsecP2Policy.getPfsKeyGroup()) {
+      return;
+    }
 
     IpsecPhase2Proposal negotiatedIpsecPhase2Proposal =
         getMatchingIpsecP2Proposal(

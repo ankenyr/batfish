@@ -94,6 +94,14 @@ public interface AwsVpcEntity {
   String JSON_KEY_NETWORK_INTERFACE_IDS = "NetworkInterfaceIds";
   String JSON_KEY_NETWORK_INTERFACES = "NetworkInterfaces";
   String JSON_KEY_OPTIONS = "Options";
+  String JSON_KEY_TUNNEL_OPTIONS = "TunnelOptions";
+  String JSON_KEY_IKE_VERSIONS = "IkeVersions";
+  String JSON_KEY_PHASE1_ENCRYPTION_ALGORITHMS = "Phase1EncryptionAlgorithms";
+  String JSON_KEY_PHASE1_INTEGRITY_ALGORITHMS = "Phase1IntegrityAlgorithms";
+  String JSON_KEY_PHASE1_DH_GROUP_NUMBERS = "Phase1DHGroupNumbers";
+  String JSON_KEY_PHASE2_ENCRYPTION_ALGORITHMS = "Phase2EncryptionAlgorithms";
+  String JSON_KEY_PHASE2_INTEGRITY_ALGORITHMS = "Phase2IntegrityAlgorithms";
+  String JSON_KEY_PHASE2_DH_GROUP_NUMBERS = "Phase2DHGroupNumbers";
   String JSON_KEY_ORDER = "Order";
   String JSON_KEY_OUTSIDE_IP_ADDRESS = "OutsideIpAddress";
   String JSON_KEY_OWNER_ID = "OwnerId";

@@ -52,69 +52,70 @@ public class VpnConnectionTest {
     JsonNode json = BatfishObjectMapper.mapper().readTree(text);
     Region region = new Region("r1");
     region.addConfigElement(json, null, null);
-
-    /*
-     * Only the available connections should show up.
-     */
-    assertThat(
-        region.getVpnConnections(),
-        equalTo(
-            ImmutableMap.of(
-                "vpn-ba2e34a8",
-                new VpnConnection(
+    ImmutableMap<String, VpnConnection> expected = ImmutableMap.of(
+            "vpn-ba2e34a8",
+            new VpnConnection(
                     true,
                     "vpn-ba2e34a8",
                     "cgw-fb76ace5",
                     GatewayType.VPN,
                     "vgw-81fd279f",
                     ImmutableList.of(
-                        new IpsecTunnel(
-                            65301L,
-                            Ip.parse("169.254.15.194"),
-                            30,
-                            Ip.parse("147.75.69.27"),
-                            "sha1",
-                            "aes-128-cbc",
-                            28800,
-                            "main",
-                            "group2",
-                            "7db2fd6e9dcffcf826743b57bc0518cfcbca8f4db0b80a7a2c3f0c3b09deb49a",
-                            "hmac-sha1-96",
-                            "aes-128-cbc",
-                            3600,
-                            "tunnel",
-                            "group2",
-                            "esp",
-                            65401L,
-                            Ip.parse("169.254.15.193"),
-                            30,
-                            Ip.parse("52.27.166.152")),
-                        new IpsecTunnel(
-                            65301L,
-                            Ip.parse("169.254.13.238"),
-                            30,
-                            Ip.parse("147.75.69.27"),
-                            "sha1",
-                            "aes-128-cbc",
-                            28800,
-                            "main",
-                            "group2",
-                            "84d71e5f49cce153c80a1f13b47989d25f2aa29d9bbc75624ab73435db792f87",
-                            "hmac-sha1-96",
-                            "aes-128-cbc",
-                            3600,
-                            "tunnel",
-                            "group2",
-                            "esp",
-                            65401L,
-                            Ip.parse("169.254.13.237"),
-                            30,
-                            Ip.parse("52.39.121.126"))),
+                            new IpsecTunnel(
+                                    65301L,
+                                    Ip.parse("169.254.15.194"),
+                                    30,
+                                    Ip.parse("147.75.69.27"),
+                                    List.of(new VpnConnection.Value("SHA1")),
+                                    List.of(new VpnConnection.Value("AES128")),
+                                    28800,
+                                    "main",
+                                    List.of(new VpnConnection.Value("2")),
+                                    "7db2fd6e9dcffcf826743b57bc0518cfcbca8f4db0b80a7a2c3f0c3b09deb49a",
+                                    List.of(new VpnConnection.Value("SHA1")),
+                                    List.of(new VpnConnection.Value("AES128")),
+                                    3600,
+                                    "tunnel",
+                                    List.of(new VpnConnection.Value("2")),
+                                    "esp",
+                                    65401L,
+                                    Ip.parse("169.254.15.193"),
+                                    30,
+                                    Ip.parse("52.27.166.152")),
+                            new IpsecTunnel(
+                                    65301L,
+                                    Ip.parse("169.254.13.238"),
+                                    30,
+                                    Ip.parse("147.75.69.27"),
+                                    List.of(new VpnConnection.Value("SHA1")),
+                                    List.of(new VpnConnection.Value("AES128")),
+                                    28800,
+                                    "main",
+                                    List.of(new VpnConnection.Value("2")),
+                                    "84d71e5f49cce153c80a1f13b47989d25f2aa29d9bbc75624ab73435db792f87",
+                                    List.of(new VpnConnection.Value("SHA1")),
+                                    List.of(new VpnConnection.Value("AES128")),
+                                    3600,
+                                    "tunnel",
+                                    List.of(new VpnConnection.Value("2")),
+                                    "esp",
+                                    65401L,
+                                    Ip.parse("169.254.13.237"),
+                                    30,
+                                    Ip.parse("52.39.121.126"))),
+
                     ImmutableList.of(),
                     ImmutableList.of(
-                        new VgwTelemetry(5, Ip.parse("52.27.166.152"), "UP", "5 BGP ROUTES"),
-                        new VgwTelemetry(5, Ip.parse("52.39.121.126"), "UP", "5 BGP ROUTES")),
-                    false))));
+                            new VgwTelemetry(5, Ip.parse("52.27.166.152"), "UP", "5 BGP ROUTES"),
+                            new VgwTelemetry(5, Ip.parse("52.39.121.126"), "UP", "5 BGP ROUTES")),
+                    false));
+    /*
+     * Only the available connections should show up.
+     */
+    assertThat(
+        region.getVpnConnections(),
+        equalTo(expected
+            ));
   }
 
   @Test
@@ -149,17 +150,17 @@ public class VpnConnectionTest {
                             Ip.parse("169.254.195.142"),
                             30,
                             Ip.parse("2.2.2.2"),
-                            "sha1",
-                            "aes-128-cbc",
+                            List.of(new VpnConnection.Value("SHA1")),
+                            List.of(new VpnConnection.Value("AES128")),
                             28800,
                             "main",
-                            "group2",
+                            List.of(new VpnConnection.Value("2")),
                             "ede3364653dd277b63b140be0abf66290208d86be59162efac5adea69bbcdf1b",
-                            "hmac-sha1-96",
-                            "aes-128-cbc",
+                            List.of(new VpnConnection.Value("SHA1")),
+                            List.of(new VpnConnection.Value("AES128")),
                             3600,
                             "tunnel",
-                            "group2",
+                            List.of(new VpnConnection.Value("2")),
                             "esp",
                             64512L,
                             Ip.parse("169.254.195.141"),
@@ -170,17 +171,17 @@ public class VpnConnectionTest {
                             Ip.parse("169.254.70.162"),
                             30,
                             Ip.parse("2.2.2.2"),
-                            "sha1",
-                            "aes-128-cbc",
+                            List.of(new VpnConnection.Value("SHA1")),
+                            List.of(new VpnConnection.Value("AES128")),
                             28800,
                             "main",
-                            "group2",
+                            List.of(new VpnConnection.Value("2")),
                             "29b2e8a12b8d59098f17913a7f7451518f16eae441aa3ee52c5cf6e49ae38f58",
-                            "hmac-sha1-96",
-                            "aes-128-cbc",
+                            List.of(new VpnConnection.Value("SHA1")),
+                            List.of(new VpnConnection.Value("AES128")),
                             3600,
                             "tunnel",
-                            "group2",
+                            List.of(new VpnConnection.Value("2")),
                             "esp",
                             64512L,
                             Ip.parse("169.254.70.161"),
@@ -223,17 +224,17 @@ public class VpnConnectionTest {
             Ip.parse("169.254.15.194"),
             30,
             Ip.parse("147.75.69.27"),
-            "sha1",
-            "aes-128-cbc",
+            List.of(new VpnConnection.Value("SHA1")),
+            List.of(new VpnConnection.Value("AES128")),
             28800,
             "main",
-            "group2",
+            List.of(new VpnConnection.Value("2")),
             "7db2fd6e9dcffcf826743b57bc0518cfcbca8f4db0b80a7a2c3f0c3b09deb49a",
-            "hmac-sha1-96",
-            "aes-128-cbc",
+            List.of(new VpnConnection.Value("SHA1")),
+            List.of(new VpnConnection.Value("AES128")),
             3600,
             "tunnel",
-            "group2",
+            List.of(new VpnConnection.Value("2")),
             "esp",
             65401L,
             Ip.parse("169.254.15.193"),
@@ -308,4 +309,78 @@ public class VpnConnectionTest {
                 .map(pfx -> toStaticRoute(pfx, ipsecTunnel.getCgwInsideAddress()))
                 .collect(ImmutableSortedSet.toImmutableSortedSet(Comparator.naturalOrder()))));
   }
+
+  @Test
+  public void testDeserializationWithOptions() throws IOException {
+    String text = readResource("org/batfish/representation/aws/VpnConnectionWithTunnelOptions.json", UTF_8);
+
+    JsonNode json = BatfishObjectMapper.mapper().readTree(text);
+    Region region = new Region("r1");
+    region.addConfigElement(json, null, null);
+    VpnConnection foo = region.getVpnConnections().get("vpn-04beebe390f8a0982");
+    System.out.println(foo);
+    /*
+     * Only the available connections should show up.
+     */
+//    assertThat(
+//            region.getVpnConnections(),
+//            equalTo(
+//                    ImmutableMap.of(
+//                            "vpn-ba2e34a8",
+//                            new VpnConnection(
+//                                    true,
+//                                    "vpn-ba2e34a8",
+//                                    "cgw-fb76ace5",
+//                                    GatewayType.VPN,
+//                                    "vgw-81fd279f",
+//                                    ImmutableList.of(
+//                                            new IpsecTunnel(
+//                                                    65301L,
+//                                                    Ip.parse("169.254.15.194"),
+//                                                    30,
+//                                                    Ip.parse("147.75.69.27"),
+//                                                    "sha1",
+//                                                    "aes-128-cbc",
+//                                                    28800,
+//                                                    "main",
+//                                                    "group2",
+//                                                    "7db2fd6e9dcffcf826743b57bc0518cfcbca8f4db0b80a7a2c3f0c3b09deb49a",
+//                                                    "hmac-sha1-96",
+//                                                    "aes-128-cbc",
+//                                                    3600,
+//                                                    "tunnel",
+//                                                    "group2",
+//                                                    "esp",
+//                                                    65401L,
+//                                                    Ip.parse("169.254.15.193"),
+//                                                    30,
+//                                                    Ip.parse("52.27.166.152")),
+//                                            new IpsecTunnel(
+//                                                    65301L,
+//                                                    Ip.parse("169.254.13.238"),
+//                                                    30,
+//                                                    Ip.parse("147.75.69.27"),
+//                                                    "sha1",
+//                                                    "aes-128-cbc",
+//                                                    28800,
+//                                                    "main",
+//                                                    "group2",
+//                                                    "84d71e5f49cce153c80a1f13b47989d25f2aa29d9bbc75624ab73435db792f87",
+//                                                    "hmac-sha1-96",
+//                                                    "aes-128-cbc",
+//                                                    3600,
+//                                                    "tunnel",
+//                                                    "group2",
+//                                                    "esp",
+//                                                    65401L,
+//                                                    Ip.parse("169.254.13.237"),
+//                                                    30,
+//                                                    Ip.parse("52.39.121.126"))),
+//                                    ImmutableList.of(),
+//                                    ImmutableList.of(
+//                                            new VgwTelemetry(5, Ip.parse("52.27.166.152"), "UP", "5 BGP ROUTES"),
+//                                            new VgwTelemetry(5, Ip.parse("52.39.121.126"), "UP", "5 BGP ROUTES")),
+//                                    false))));
+  }
 }
+
