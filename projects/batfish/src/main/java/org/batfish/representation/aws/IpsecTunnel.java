@@ -9,28 +9,23 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.batfish.common.util.CommonUtil;
 import org.batfish.datamodel.Ip;
-import org.w3c.dom.Element;
+import org.batfish.datamodel.Prefix;
+//import org.w3c.dom.Element;
 
 
 /** Represents an AWs IPSec tunnel */
 @ParametersAreNonnullByDefault
 final class IpsecTunnel implements Serializable {
 
-  private @Nullable Long _cgwBgpAsn;
+  private final @Nonnull String _cgwId;
 
   private final @Nonnull Ip _cgwInsideAddress;
-
-  private final int _cgwInsidePrefixLength;
-
-  private final @Nonnull Ip _cgwOutsideAddress;
 
   private final @Nonnull List<VpnConnection.Value> _ikeAuthProtocol;
 
   private final @Nonnull List<VpnConnection.Value> _ikeEncryptionProtocol;
 
   private final int _ikeLifetime;
-
-  private final @Nonnull String _ikeMode;
 
   private final @Nonnull List<VpnConnection.Value> _ikePerfectForwardSecrecy;
 
@@ -56,113 +51,51 @@ final class IpsecTunnel implements Serializable {
 
   private final @Nonnull Ip _vgwOutsideAddress;
 
-  static IpsecTunnel create(Element ipsecTunnel, boolean isBgpConnection, VpnConnection.TunnelOptions tunnelOption) {
+  static IpsecTunnel create(VpnConnection.TunnelOptions tunnelOption, String cgwId) {
 
     Builder builder = new Builder();
+    builder.setCgwId(cgwId);
 
-    Element cgwElement =
-        (Element) ipsecTunnel.getElementsByTagName(AwsVpcEntity.XML_KEY_CUSTOMER_GATEWAY).item(0);
 
-    builder.setcgwOutsideAddress(
-        Ip.parse(
-            Utils.textOfFirstXmlElementWithInnerTag(
-                cgwElement,
-                AwsVpcEntity.XML_KEY_TUNNEL_OUTSIDE_ADDRESS,
-                AwsVpcEntity.XML_KEY_IP_ADDRESS)));
+    builder.setVgwOutsideAddress(Ip.parse(tunnelOption.getOutsideIpAddress()));
 
-    builder.setcgwInsideAddress(
-        Ip.parse(
-            Utils.textOfFirstXmlElementWithInnerTag(
-                cgwElement,
-                AwsVpcEntity.XML_KEY_TUNNEL_INSIDE_ADDRESS,
-                AwsVpcEntity.XML_KEY_IP_ADDRESS)));
+    String[] ip = tunnelOption.getInsideIpAddress().split("/");
+    Prefix ip_prefix = Prefix.parse(tunnelOption.getInsideIpAddress());
+    //  Ip vgwInsideIp = Ip.parse(ip[0]);
 
-    builder.setCgwInsidePrefixLength(
-        Integer.parseInt(
-            Utils.textOfFirstXmlElementWithInnerTag(
-                cgwElement,
-                AwsVpcEntity.XML_KEY_TUNNEL_INSIDE_ADDRESS,
-                AwsVpcEntity.XML_KEY_NETWORK_CIDR)));
+    builder.setVgwInsideAddress(ip_prefix.getFirstHostIp());
+    builder.setVgwInsidePrefixLength(Integer.parseInt(ip[1]));
+    builder.setCgwInsideAddress(ip_prefix.getLastHostIp());
 
-    // we see asn configured only for BGP connections
-    if (isBgpConnection) {
-      builder.setCgwBgpAsn(
-          Long.parseLong(
-              Utils.textOfFirstXmlElementWithInnerTag(
-                  cgwElement, AwsVpcEntity.XML_KEY_BGP, AwsVpcEntity.XML_KEY_ASN)));
-    }
-    Element vgwElement =
-        (Element) ipsecTunnel.getElementsByTagName(AwsVpcEntity.XML_KEY_VPN_GATEWAY).item(0);
 
-    builder.setVgwOutsideAddress(
-        Ip.parse(
-            Utils.textOfFirstXmlElementWithInnerTag(
-                vgwElement,
-                AwsVpcEntity.XML_KEY_TUNNEL_OUTSIDE_ADDRESS,
-                AwsVpcEntity.XML_KEY_IP_ADDRESS)));
-
-    builder.setVgwInsideAddress(
-        Ip.parse(
-            Utils.textOfFirstXmlElementWithInnerTag(
-                vgwElement,
-                AwsVpcEntity.XML_KEY_TUNNEL_INSIDE_ADDRESS,
-                AwsVpcEntity.XML_KEY_IP_ADDRESS)));
-
-    builder.setVgwInsidePrefixLength(
-        Integer.parseInt(
-            Utils.textOfFirstXmlElementWithInnerTag(
-                vgwElement,
-                AwsVpcEntity.XML_KEY_TUNNEL_INSIDE_ADDRESS,
-                AwsVpcEntity.XML_KEY_NETWORK_CIDR)));
-
-    // we see asn configured only for BGP connections
-    if (isBgpConnection) {
-      builder.setVgwBgpAsn(
-          Long.parseLong(
-              Utils.textOfFirstXmlElementWithInnerTag(
-                  vgwElement, AwsVpcEntity.XML_KEY_BGP, AwsVpcEntity.XML_KEY_ASN)));
-    }
-    Element ikeElement =
-        (Element) ipsecTunnel.getElementsByTagName(AwsVpcEntity.XML_KEY_IKE).item(0);
 
     builder.setIkeAuthProtocol(tunnelOption.getPhase1IntegrityAlgorithm());
     builder.setIkeEncryptionProtocol(tunnelOption.getPhase2EncryptionAlgorithm());
-    builder.setIkeLifetime(
-        Integer.parseInt(
-            Utils.textOfFirstXmlElementWithTag(ikeElement, AwsVpcEntity.XML_KEY_LIFETIME)));
     builder.setIkePerfectForwardSecrecy(tunnelOption.getPhase1DHGroupNumbers());
-    builder.setIkeMode(Utils.textOfFirstXmlElementWithTag(ikeElement, AwsVpcEntity.XML_KEY_MODE));
     builder.setIkePreSharedKeyHash(
         CommonUtil.sha256Digest(
-            Utils.textOfFirstXmlElementWithTag(ikeElement, AwsVpcEntity.XML_KEY_PRE_SHARED_KEY)
+            tunnelOption.getPresharedKey()
                 + CommonUtil.salt()));
 
-    Element ipsecElement =
-        (Element) ipsecTunnel.getElementsByTagName(AwsVpcEntity.XML_KEY_IPSEC).item(0);
-
-    builder.setIpsecProtocol(
-        Utils.textOfFirstXmlElementWithTag(ipsecElement, AwsVpcEntity.XML_KEY_PROTOCOL));
+    // esp is the only option
+    builder.setIpsecProtocol("esp");
     builder.setIpsecAuthProtocol(tunnelOption.getPhase2IntegrityAlgorithm());
     builder.setIpsecEncryptionProtocol(tunnelOption.getPhase2EncryptionAlgorithm());
-    builder.setIpsecLifetime(
-        Integer.parseInt(
-            Utils.textOfFirstXmlElementWithTag(ipsecElement, AwsVpcEntity.XML_KEY_LIFETIME)));
     builder.setIpsecPerfectForwardSecrecy(tunnelOption.getPhase2DHGroupNumbers());
-    builder.setIpsecMode(
-        Utils.textOfFirstXmlElementWithTag(ipsecElement, AwsVpcEntity.XML_KEY_MODE));
+    // AWS looks to support both main and aggressive but does not give options to set these.
+    // Main and Aggressive are both compatible with each other.
+    // https://aws.amazon.com/blogs/networking-and-content-delivery/aws-site-to-site-vpn-choosing-the-right-options-to-optimize-performance/
+    builder.setIpsecMode("main");
 
     return builder.build();
   }
 
   IpsecTunnel(
-      @Nullable Long cgwBgpAsn,
+      String cgwId,
       Ip cgwInsideAddress,
-      int cgwInsidePrefixLength,
-      Ip cgwOutsideAddress,
       List<VpnConnection.Value> ikeAuthProtocol,
       List<VpnConnection.Value> ikeEncryptionProtocol,
       int ikeLifetime,
-      String ikeMode,
       List<VpnConnection.Value> ikePerfectForwardSecrecy,
       String ikePreSharedKeyHash,
       List<VpnConnection.Value> ipsecAuthProtocol,
@@ -175,15 +108,12 @@ final class IpsecTunnel implements Serializable {
       Ip vgwInsideAddress,
       int vgwInsidePrefixLength,
       Ip vgwOutsideAddress) {
-    _cgwBgpAsn = cgwBgpAsn;
+    _cgwId = cgwId;
     _cgwInsideAddress = cgwInsideAddress;
-    _cgwInsidePrefixLength = cgwInsidePrefixLength;
-    _cgwOutsideAddress = cgwOutsideAddress;
 
     _ikeAuthProtocol = ikeAuthProtocol;
     _ikeEncryptionProtocol = ikeEncryptionProtocol;
     _ikeLifetime = ikeLifetime;
-    _ikeMode = ikeMode;
     _ikePerfectForwardSecrecy = ikePerfectForwardSecrecy;
     _ikePreSharedKeyHash = ikePreSharedKeyHash;
 
@@ -199,24 +129,13 @@ final class IpsecTunnel implements Serializable {
     _vgwInsideAddress = vgwInsideAddress;
     _vgwOutsideAddress = vgwOutsideAddress;
   }
-
   @Nullable
-  Long getCgwBgpAsn() {
-    return _cgwBgpAsn;
+  String getCgwId() {
+    return _cgwId;
   }
-
   @Nonnull
   Ip getCgwInsideAddress() {
     return _cgwInsideAddress;
-  }
-
-  int getCgwInsidePrefixLength() {
-    return _cgwInsidePrefixLength;
-  }
-
-  @Nonnull
-  Ip getCgwOutsideAddress() {
-    return _cgwOutsideAddress;
   }
 
   @Nonnull
@@ -231,11 +150,6 @@ final class IpsecTunnel implements Serializable {
 
   int getIkeLifetime() {
     return _ikeLifetime;
-  }
-
-  @Nonnull
-  String getIkeMode() {
-    return _ikeMode;
   }
 
   @Nonnull
@@ -305,17 +219,14 @@ final class IpsecTunnel implements Serializable {
       return false;
     }
     IpsecTunnel that = (IpsecTunnel) o;
-    return Objects.equals(_cgwBgpAsn, that._cgwBgpAsn)
-        && _cgwInsidePrefixLength == that._cgwInsidePrefixLength
+    return _cgwId == that._cgwId
         && _ikeLifetime == that._ikeLifetime
         && _ipsecLifetime == that._ipsecLifetime
         && Objects.equals(_vgwBgpAsn, that._vgwBgpAsn)
         && _vgwInsidePrefixLength == that._vgwInsidePrefixLength
         && Objects.equals(_cgwInsideAddress, that._cgwInsideAddress)
-        && Objects.equals(_cgwOutsideAddress, that._cgwOutsideAddress)
         && Objects.equals(_ikeAuthProtocol, that._ikeAuthProtocol)
         && Objects.equals(_ikeEncryptionProtocol, that._ikeEncryptionProtocol)
-        && Objects.equals(_ikeMode, that._ikeMode)
         && Objects.equals(_ikePerfectForwardSecrecy, that._ikePerfectForwardSecrecy)
         && Objects.equals(_ikePreSharedKeyHash, that._ikePreSharedKeyHash)
         && Objects.equals(_ipsecAuthProtocol, that._ipsecAuthProtocol)
@@ -329,15 +240,11 @@ final class IpsecTunnel implements Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(
-        _cgwBgpAsn,
+    return Objects.hash(_cgwId,
         _cgwInsideAddress,
-        _cgwInsidePrefixLength,
-        _cgwOutsideAddress,
         _ikeAuthProtocol,
         _ikeEncryptionProtocol,
         _ikeLifetime,
-        _ikeMode,
         _ikePerfectForwardSecrecy,
         _ikePreSharedKeyHash,
         _ipsecAuthProtocol,
@@ -355,14 +262,11 @@ final class IpsecTunnel implements Serializable {
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
-        .add("_cgwBgpAsn", _cgwBgpAsn)
+        .add("_cgwId", _cgwId)
         .add("_cgwInsideAddress", _cgwInsideAddress)
-        .add("_cgwInsidePrefixLength", _cgwInsidePrefixLength)
-        .add("_cgwOutsideAddress", _cgwOutsideAddress)
         .add("_ikeAuthProtocol", _ikeAuthProtocol)
         .add("_ikeEncryptionProtocol", _ikeEncryptionProtocol)
         .add("_ikeLifetime", _ikeLifetime)
-        .add("_ikeMode", _ikeMode)
         .add("_ikePerfectForwardSecrecy", _ikePerfectForwardSecrecy)
         .add("_ikePreSharedKeyHash", _ikePreSharedKeyHash)
         .add("_ipsecAuthProtocol", _ipsecAuthProtocol)
@@ -379,14 +283,11 @@ final class IpsecTunnel implements Serializable {
   }
 
   static final class Builder {
-    private Long _cgwBgpAsn;
     private Ip _cgwInsideAddress;
-    private int _cgwInsidePrefixLength;
-    private Ip _cgwOutsideAddress;
+    private String _cgwId;
     private List<VpnConnection.Value> _ikeAuthProtocol;
     private List<VpnConnection.Value> _ikeEncryptionProtocol;
     private int _ikeLifetime;
-    private String _ikeMode;
     private List<VpnConnection.Value> _ikePerfectForwardSecrecy;
     private String _ikePreSharedKeyHash;
     private List<VpnConnection.Value> _ipsecAuthProtocol;
@@ -402,23 +303,13 @@ final class IpsecTunnel implements Serializable {
 
     private Builder() {}
 
-    Builder setCgwBgpAsn(@Nullable Long cgwBgpAsn) {
-      _cgwBgpAsn = cgwBgpAsn;
-      return this;
-    }
-
-    Builder setcgwInsideAddress(Ip cgwInsideAddress) {
+    Builder setCgwInsideAddress(Ip cgwInsideAddress) {
       _cgwInsideAddress = cgwInsideAddress;
       return this;
     }
 
-    Builder setCgwInsidePrefixLength(int cgwInsidePrefixLength) {
-      _cgwInsidePrefixLength = cgwInsidePrefixLength;
-      return this;
-    }
-
-    Builder setcgwOutsideAddress(Ip cgwOutsideAddress) {
-      _cgwOutsideAddress = cgwOutsideAddress;
+    Builder setCgwId(String cgwId) {
+      _cgwId = cgwId;
       return this;
     }
 
@@ -434,11 +325,6 @@ final class IpsecTunnel implements Serializable {
 
     Builder setIkeLifetime(int ikeLifetime) {
       _ikeLifetime = ikeLifetime;
-      return this;
-    }
-
-    Builder setIkeMode(String ikeMode) {
-      _ikeMode = ikeMode;
       return this;
     }
 
@@ -504,14 +390,11 @@ final class IpsecTunnel implements Serializable {
 
     IpsecTunnel build() {
       return new IpsecTunnel(
-          _cgwBgpAsn,
+          _cgwId,
           _cgwInsideAddress,
-          _cgwInsidePrefixLength,
-          _cgwOutsideAddress,
           _ikeAuthProtocol,
           _ikeEncryptionProtocol,
           _ikeLifetime,
-          _ikeMode,
           _ikePerfectForwardSecrecy,
           _ikePreSharedKeyHash,
           _ipsecAuthProtocol,

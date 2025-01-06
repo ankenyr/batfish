@@ -504,7 +504,7 @@ final class TransitGateway implements AwsVpcEntity, Serializable {
     }
     Vrf vrf = tgwCfg.getVrfs().get(vrfName);
 
-    if (vpnConnection.isBgpConnection()) {
+    if (vpnConnection.getStaticRoutesOnly()) {
       Optional<String> unsupported =
           supportedVpnBgpConfiguration(attachment, vpnConnection, region);
       if (unsupported.isPresent()) {
@@ -515,9 +515,9 @@ final class TransitGateway implements AwsVpcEntity, Serializable {
         createBgpProcess(tgwCfg, vrf, awsConfiguration);
       }
     }
-
+    Long awsAsn = region.getTransitGateways().get(vpnConnection.getAwsGatewayId()).getOptions()._amazonSideAsn;
     vpnConnection.applyToGateway(
-        tgwCfg, vrf, bgpExportPolicyName(vrfName), bgpImportPolicyName(vrfName), warnings);
+        tgwCfg, vrf, region.getCustomerGateways(), awsAsn, bgpExportPolicyName(vrfName), bgpImportPolicyName(vrfName), warnings);
   }
 
   /**

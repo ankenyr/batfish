@@ -102,8 +102,10 @@ public interface AwsVpcEntity {
   String JSON_KEY_PHASE2_ENCRYPTION_ALGORITHMS = "Phase2EncryptionAlgorithms";
   String JSON_KEY_PHASE2_INTEGRITY_ALGORITHMS = "Phase2IntegrityAlgorithms";
   String JSON_KEY_PHASE2_DH_GROUP_NUMBERS = "Phase2DHGroupNumbers";
+  String JSON_KEY_PRESHARED_KEY = "PreSharedKey";
   String JSON_KEY_ORDER = "Order";
   String JSON_KEY_OUTSIDE_IP_ADDRESS = "OutsideIpAddress";
+  String JSON_KEY_INSIDE_IP_ADDRESS = "TunnelInsideCidr";
   String JSON_KEY_OWNER_ID = "OwnerId";
   String JSON_KEY_PLACEMENT = "Placement";
   String JSON_KEY_PLACEMENT_GROUPS = "PlacementGroups";

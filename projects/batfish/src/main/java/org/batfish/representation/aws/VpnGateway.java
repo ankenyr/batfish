@@ -121,7 +121,7 @@ final class VpnGateway implements AwsVpcEntity, Serializable {
     boolean doBgp =
         region.getVpnConnections().values().stream()
             .filter(conn -> _vpnGatewayId.equals(conn.getAwsGatewayId()))
-            .anyMatch(VpnConnection::isBgpConnection);
+            .anyMatch(VpnConnection::getStaticRoutesOnly);
 
     if (doBgp) {
       String loopbackBgp = "loopbackBgp";
@@ -158,6 +158,8 @@ final class VpnGateway implements AwsVpcEntity, Serializable {
               c.applyToGateway(
                   cfgNode,
                   cfgNode.getDefaultVrf(),
+                  region.getCustomerGateways(),
+                      123L,
                   VGW_EXPORT_POLICY_NAME,
                   VGW_IMPORT_POLICY_NAME,
                   warnings));
