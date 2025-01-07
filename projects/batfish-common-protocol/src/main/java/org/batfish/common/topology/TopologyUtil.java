@@ -2,7 +2,6 @@ package org.batfish.common.topology;
 
 import static org.batfish.common.util.CollectionUtil.toImmutableMap;
 import static org.batfish.common.util.IpsecUtil.initIpsecTopology;
-import static org.batfish.common.util.IpsecUtil.retainCompatibleTunnelEdges;
 import static org.batfish.datamodel.Interface.TUNNEL_INTERFACE_TYPES;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -548,7 +547,7 @@ public final class TopologyUtil {
    * @return {@link IpsecTopology}
    */
   public static IpsecTopology computeIpsecTopology(Map<String, Configuration> configurations) {
-    return retainCompatibleTunnelEdges(initIpsecTopology(configurations), configurations);
+    return initIpsecTopology(configurations);
   }
 
   /**

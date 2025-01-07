@@ -85,7 +85,7 @@ final class IpsecTunnel implements Serializable {
     // AWS looks to support both main and aggressive but does not give options to set these.
     // Main and Aggressive are both compatible with each other.
     // https://aws.amazon.com/blogs/networking-and-content-delivery/aws-site-to-site-vpn-choosing-the-right-options-to-optimize-performance/
-    builder.setIpsecMode("main");
+    builder.setIpsecMode("tunnel");
 
     return builder.build();
   }
