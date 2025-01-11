@@ -133,6 +133,7 @@ public class IpsecUtil {
                         initiatorOwner, candidateOwner, ipsecStaticPeerConfig, candidateIpsecPeer);
 
                 graph.putEdgeValue(ipsecPeerConfigId, candidateIpsecPeerConfigId, ipsecSession);
+                graph.putEdgeValue(candidateIpsecPeerConfigId, ipsecPeerConfigId, ipsecSession);
               });
     }
 
