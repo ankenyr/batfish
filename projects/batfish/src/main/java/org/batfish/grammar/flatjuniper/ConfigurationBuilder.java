@@ -2002,7 +2002,9 @@ public class ConfigurationBuilder extends FlatJuniperParserBaseListener
     if (ctx.HMAC_MD5_96() != null) {
       return IpsecAuthenticationAlgorithm.HMAC_MD5_96;
     } else if (ctx.HMAC_SHA1_96() != null) {
-      return IpsecAuthenticationAlgorithm.HMAC_SHA1_96;
+        return IpsecAuthenticationAlgorithm.HMAC_SHA1_96;
+    } else if (ctx.HMAC_SHA256_128() != null) {
+        return IpsecAuthenticationAlgorithm.HMAC_SHA_256_128;
     } else {
       throw new BatfishException("invalid ipsec authentication algorithm: " + ctx.getText());
     }

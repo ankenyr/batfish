@@ -154,6 +154,31 @@ public class AwsConfiguration extends VendorConfiguration {
     addOrGetAccount(account).addOrGetRegion(region).addConfigElement(json, sourceFileName, pvcae);
   }
 
+  /** Sets attributes in configs where data must be obtained from other JSON files.
+   * Example: VpnConnections references information in both Transit Gateways and Customer Gateways.
+   * */
+  public void postProcess() {
+    for (Account account : _accounts.values()) {
+      for (Region region : account.getRegions()) {
+       for (VpnConnection vpns : region.getVpnConnections().values()) {
+           CustomerGateway cgw = region.getCustomerGateways().get(vpns.getCustomerGatewayId());
+           String gatewayId = vpns.getAwsGatewayId();
+           VpnConnection.GatewayType gatewayType = vpns.getAwsGatewayType();
+           for (IpsecTunnel tunnel  : vpns.getIpsecTunnels()) {
+             tunnel.setCgwBgpAsn(Long.parseLong(cgw.getBgpAsn()));
+             if (gatewayType.equals(VpnConnection.GatewayType.TRANSIT)) {
+               //get tgw
+               tunnel.setVgwBgpAsn(region.getTransitGateways().get(gatewayId).getOptions().getAmazonSideAsn());
+             } else if (gatewayType.equals(VpnConnection.GatewayType.VPN)) {
+               tunnel.setVgwBgpAsn(region.getVpnGateways().get(gatewayId).getAmazonSideAsn());
+             }
+         }
+       }
+      }
+    }
+
+  }
+
   /**
    * Convert this AWS config to a set of VI configurations
    *

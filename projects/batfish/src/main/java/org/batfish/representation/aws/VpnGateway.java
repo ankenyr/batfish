@@ -61,6 +61,7 @@ final class VpnGateway implements AwsVpcEntity, Serializable {
       return _vpcId;
     }
   }
+  private final long _amazonSideAsn;
 
   private final @Nonnull List<String> _attachmentVpcIds;
 
@@ -72,7 +73,9 @@ final class VpnGateway implements AwsVpcEntity, Serializable {
   private static VpnGateway create(
       @JsonProperty(JSON_KEY_VPN_GATEWAY_ID) @Nullable String vpnGatewayId,
       @JsonProperty(JSON_KEY_VPC_ATTACHMENTS) @Nullable List<VpcAttachment> vpcAttachments,
-      @JsonProperty(JSON_KEY_TAGS) @Nullable List<Tag> tags) {
+      @JsonProperty(JSON_KEY_TAGS) @Nullable List<Tag> tags,
+      @JsonProperty(JSON_KEY_AMAZON_SIDE_ASN) @Nullable Long amazonSideAsn) {
+    checkArgument(amazonSideAsn != null, "Amazon side ASN cannot be null for a VPN gateway");
     checkArgument(vpnGatewayId != null, "Id cannot be null for VPC gateway");
     checkArgument(vpcAttachments != null, "Vpc attachments cannot be null for VPN gateway");
 
@@ -82,13 +85,20 @@ final class VpnGateway implements AwsVpcEntity, Serializable {
             .map(VpcAttachment::getVpcId)
             .collect(ImmutableList.toImmutableList()),
         firstNonNull(tags, ImmutableList.<Tag>of()).stream()
-            .collect(ImmutableMap.toImmutableMap(Tag::getKey, Tag::getValue)));
+            .collect(ImmutableMap.toImmutableMap(Tag::getKey, Tag::getValue)),
+        amazonSideAsn);
   }
 
-  VpnGateway(String vpnGatewayId, List<String> attachmentVpcIds, Map<String, String> tags) {
+  VpnGateway(String vpnGatewayId, List<String> attachmentVpcIds, Map<String, String> tags, Long amazonSideAsn) {
     _vpnGatewayId = vpnGatewayId;
     _attachmentVpcIds = attachmentVpcIds;
     _tags = tags;
+    _amazonSideAsn = amazonSideAsn;
+  }
+
+  @Nonnull
+  Long getAmazonSideAsn() {
+    return _amazonSideAsn;
   }
 
   @Nonnull

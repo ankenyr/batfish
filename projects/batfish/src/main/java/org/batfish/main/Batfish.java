@@ -212,6 +212,8 @@ import org.batfish.question.differentialreachability.DifferentialReachabilityRes
 import org.batfish.question.multipath.MultipathConsistencyParameters;
 import org.batfish.referencelibrary.ReferenceLibrary;
 import org.batfish.representation.aws.AwsConfiguration;
+//import org.batfish.representation.aws.Region;
+//import org.batfish.representation.aws.VpnConnection;
 import org.batfish.representation.host.HostConfiguration;
 import org.batfish.representation.iptables.IptablesVendorConfiguration;
 import org.batfish.role.InferRoles;
@@ -1417,6 +1419,7 @@ public class Batfish extends PluginConsumer implements IBatfish {
             new Warning(String.format("Unexpected content in AWS file %s", fileName), "AWS"));
       }
     }
+    config.postProcess();
     return config;
   }
 

@@ -346,16 +346,16 @@ public final class Configuration implements Serializable {
     _dnsServers = new TreeSet<>();
     _domainName = null;
     _generatedReferenceBooks = new TreeMap<>();
-    _ikePhase1keys = ImmutableSortedMap.of();
+    _ikePhase1keys = new TreeMap<>();
     _ikePhase1Policies = new TreeMap<>();
     _ikePhase1Proposals = new TreeMap<>();
     _interfaces = new TreeMap<>();
     _ipAccessLists = new TreeMap<>();
     _ipSpaces = new HashMap<>();
     _ipSpaceMetadata = new TreeMap<>();
-    _ipsecPeerConfigs = ImmutableSortedMap.of();
-    _ipsecPhase2Policies = ImmutableSortedMap.of();
-    _ipsecPhase2Proposals = ImmutableSortedMap.of();
+    _ipsecPeerConfigs = new TreeMap<>();
+    _ipsecPhase2Policies = new TreeMap<>();
+    _ipsecPhase2Proposals = new TreeMap<>();
     _loggingServers = new TreeSet<>();
     _mlags = ImmutableSortedMap.of();
     _normalVlanRange =
@@ -605,16 +605,31 @@ public final class Configuration implements Serializable {
     return _ikePhase1keys;
   }
 
+  @JsonProperty(PROP_IKE_PHASE1_KEYS)
+  public void extendIkePhase1Keys(@Nullable Map<String, IkePhase1Key> ikePhase1Keys) {
+    _ikePhase1keys.putAll(firstNonNull(ikePhase1Keys, ImmutableMap.of()));
+  }
+
   /** Dictionary of all IKE phase1 policies for this node. */
   @JsonProperty(PROP_IKE_PHASE1_POLICIES)
   public Map<String, IkePhase1Policy> getIkePhase1Policies() {
     return _ikePhase1Policies;
   }
 
+  @JsonProperty(PROP_IKE_PHASE1_POLICIES)
+  public void extendIkePhase1Policies(Map<String, IkePhase1Policy> ikePhase1Policies) {
+    _ikePhase1Policies.putAll(firstNonNull(ikePhase1Policies, ImmutableMap.of()));
+  }
+
   /** Dictionary of all IKE phase1 proposals for this node. */
   @JsonProperty(PROP_IKE_PHASE1_PROPOSALS)
   public Map<String, IkePhase1Proposal> getIkePhase1Proposals() {
     return _ikePhase1Proposals;
+  }
+
+  @JsonProperty(PROP_IKE_PHASE1_PROPOSALS)
+  public void extendIkePhase1Proposals(Map<String, IkePhase1Proposal> ikePhase1Proposals) {
+    _ikePhase1Proposals.putAll(ikePhase1Proposals);
   }
 
   /** Dictionary of all interfaces across all VRFs for this node. */
@@ -670,6 +685,11 @@ public final class Configuration implements Serializable {
     return _ipsecPeerConfigs;
   }
 
+  @JsonProperty(PROP_IPSEC_PEER_CONFIGS)
+  public void extendIpsecPeerConfigs(@Nullable Map<String, IpsecPeerConfig> ipsecPeerConfigs) {
+    _ipsecPeerConfigs.putAll(firstNonNull(ipsecPeerConfigs, ImmutableMap.of()));
+  }
+
   public Map<String, IpSpace> getIpSpaces() {
     return _ipSpaces;
   }
@@ -690,10 +710,21 @@ public final class Configuration implements Serializable {
     return _ipsecPhase2Policies;
   }
 
+  @JsonProperty(PROP_IPSEC_PHASE2_POLICIES)
+  public void extendIpsecPhase2Policies(@Nullable Map<String, IpsecPhase2Policy> ipsecPhase2Policies) {
+    _ipsecPhase2Policies.putAll(firstNonNull(ipsecPhase2Policies, ImmutableMap.of()));
+  }
+
   /** Dictionary of all IPSec phase 2 proposals for this node. */
   @JsonProperty(PROP_IPSEC_PHASE2_PROPOSALS)
   public Map<String, IpsecPhase2Proposal> getIpsecPhase2Proposals() {
     return _ipsecPhase2Proposals;
+  }
+
+  @JsonProperty(PROP_IPSEC_PHASE2_PROPOSALS)
+  public void extendIpsecPhase2Proposals(
+          @Nullable Map<String, IpsecPhase2Proposal> ipsecPhase2Proposals) {
+    _ipsecPhase2Proposals.putAll(firstNonNull(ipsecPhase2Proposals, ImmutableMap.of()));
   }
 
   @JsonIgnore

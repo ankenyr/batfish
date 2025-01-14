@@ -739,7 +739,7 @@ public final class Region implements Serializable {
   }
 
   @Nonnull
-  Map<String, VpnConnection> getVpnConnections() {
+  public Map<String, VpnConnection> getVpnConnections() {
     return _vpnConnections;
   }
 
