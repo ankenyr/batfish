@@ -340,9 +340,9 @@ final public class VpnConnection implements AwsVpcEntity, Serializable {
               )),
               Ip.parse(outsideIpAddress),
               tunnelInsideCidr,
-              firstNonNull(28800, replayWindowSize),
+              firstNonNull(replayWindowSize, 28800),
               presharedKey,
-              firstNonNull(3600, phase2LifetimeSeconds)
+              firstNonNull(phase2LifetimeSeconds, 3600)
       );
     }
     private TunnelOptions(
