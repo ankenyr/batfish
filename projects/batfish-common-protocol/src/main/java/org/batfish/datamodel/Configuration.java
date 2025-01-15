@@ -617,7 +617,7 @@ public final class Configuration implements Serializable {
   }
 
   @JsonProperty(PROP_IKE_PHASE1_POLICIES)
-  public void extendIkePhase1Policies(Map<String, IkePhase1Policy> ikePhase1Policies) {
+  public void extendIkePhase1Policies(@Nullable Map<String, IkePhase1Policy> ikePhase1Policies) {
     _ikePhase1Policies.putAll(firstNonNull(ikePhase1Policies, ImmutableMap.of()));
   }
 
@@ -628,8 +628,8 @@ public final class Configuration implements Serializable {
   }
 
   @JsonProperty(PROP_IKE_PHASE1_PROPOSALS)
-  public void extendIkePhase1Proposals(Map<String, IkePhase1Proposal> ikePhase1Proposals) {
-    _ikePhase1Proposals.putAll(ikePhase1Proposals);
+  public void extendIkePhase1Proposals(@Nullable Map<String, IkePhase1Proposal> ikePhase1Proposals) {
+    _ikePhase1Proposals.putAll(firstNonNull(ikePhase1Proposals, ImmutableMap.of()));
   }
 
   /** Dictionary of all interfaces across all VRFs for this node. */

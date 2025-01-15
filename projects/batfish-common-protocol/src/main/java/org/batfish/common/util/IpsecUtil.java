@@ -263,6 +263,8 @@ public class IpsecUtil {
       IkePhase1Key initiatorKey,
       IkePhase1Key responderKey,
       IpsecSession.Builder ipsecSessionBuilder) {
+    checkArgument(responderKey.getKeyHash() == null, "Responder key hash is null");
+    checkArgument(initiatorKey.getKeyHash() == null, "Initiator key hash is null");
     if (!responderKey.getKeyType().equals(initiatorKey.getKeyType())) {
       return;
     }
