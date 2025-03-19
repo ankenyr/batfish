@@ -27,6 +27,9 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.batfish.common.plugin.TracerouteEngine;
 import org.batfish.datamodel.ConcreteInterfaceAddress;
 import org.batfish.datamodel.Configuration;
@@ -60,6 +63,7 @@ import org.batfish.datamodel.ipsec.IpsecTopology;
 
 @ParametersAreNonnullByDefault
 public class IpsecUtil {
+  private static final Logger LOGGER = LogManager.getLogger(IpsecUtil.class);
 
   /**
    * Compute the initial IPsec topology
@@ -67,6 +71,7 @@ public class IpsecUtil {
    * @param configurations {@link Configuration}s for which the topology has to be computed
    * @return {@link IpsecTopology}
    */
+  @Nonnull
   public static IpsecTopology initIpsecTopology(Map<String, Configuration> configurations) {
 
     NetworkConfigurations networkConfigurations = NetworkConfigurations.of(configurations);
@@ -263,9 +268,14 @@ public class IpsecUtil {
       IkePhase1Key initiatorKey,
       IkePhase1Key responderKey,
       IpsecSession.Builder ipsecSessionBuilder) {
-    checkArgument(responderKey.getKeyHash() == null, "Responder key hash is null");
-    checkArgument(initiatorKey.getKeyHash() == null, "Initiator key hash is null");
     if (!responderKey.getKeyType().equals(initiatorKey.getKeyType())) {
+      return;
+    }
+    if (responderKey.getKeyHash() == null) {
+      LOGGER.info("IkePhase1Key responderKey keyHash is missing.");
+      return;
+    } else if (initiatorKey.getKeyHash() == null) {
+      LOGGER.info("IkePhase1Key initiatorKeey keyHash is missing.");
       return;
     }
     IkePhase1Key negotiatedIkePhase1Key = new IkePhase1Key();
@@ -437,6 +447,7 @@ public class IpsecUtil {
    * @param configurations {@link Map} of {@link Configuration} to configuration names
    * @return {@link IpsecTopology}
    */
+  @Nonnull
   public static IpsecTopology retainCompatibleTunnelEdges(
       IpsecTopology ipsecTopology, Map<String, Configuration> configurations) {
     NetworkConfigurations networkConfigurations = NetworkConfigurations.of(configurations);
@@ -485,6 +496,7 @@ public class IpsecUtil {
     return new IpsecTopology(bidirCompatibleEdges);
   }
 
+  @Nonnull
   private static SetMultimap<Ip, IpWildcardSetIpSpace> initPrivateIpsByPublicIp(
       Map<String, Configuration> configurations) {
     /*
@@ -527,6 +539,7 @@ public class IpsecUtil {
    * @param configurations {@link Map} of configuration objects
    * @return {@link Set} of {@link Edge}s
    */
+  @Nonnull
   public static Set<Edge> toEdgeSet(
       @Nonnull IpsecTopology ipsecTopology, @Nonnull Map<String, Configuration> configurations) {
     NetworkConfigurations nf = NetworkConfigurations.of(configurations);

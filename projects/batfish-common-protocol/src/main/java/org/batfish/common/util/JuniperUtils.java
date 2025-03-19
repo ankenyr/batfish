@@ -59,6 +59,7 @@ public final class JuniperUtils {
   }
 
   private String decrypt(String key) {
+
     if (!isJuniper9CipherText(key)) {
       throw new BatfishException("Invalid Juniper $9$ ciphertext: \"" + key + "\"");
     }
