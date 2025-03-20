@@ -91,49 +91,94 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
               new SetOrigin(new LiteralOrigin(OriginType.INCOMPLETE, null)),
               Statements.ExitAccept.toStaticStatement()));
 
+  @Nonnull
   private static DiffieHellmanGroup toDiffieHellmanGroup(String perfectForwardSecrecy) {
     switch (perfectForwardSecrecy) {
-      case "group2":
+      case "2":
         return DiffieHellmanGroup.GROUP2;
+      case "5":
+        return DiffieHellmanGroup.GROUP5;
+      case "14":
+        return DiffieHellmanGroup.GROUP14;
+      case "15":
+        return DiffieHellmanGroup.GROUP15;
+      case "16":
+        return DiffieHellmanGroup.GROUP16;
+      case "17":
+        return DiffieHellmanGroup.GROUP17;
+      case "18":
+        return DiffieHellmanGroup.GROUP18;
+      case "19":
+        return DiffieHellmanGroup.GROUP19;
+      case "20":
+        return DiffieHellmanGroup.GROUP20;
+      case "21":
+        return DiffieHellmanGroup.GROUP21;
+      case "22":
+        return DiffieHellmanGroup.GROUP22;
+      case "23":
+        return DiffieHellmanGroup.GROUP23;
+      case "24":
+        return DiffieHellmanGroup.GROUP24;
       default:
         throw new BatfishException(
-            "No conversion to Diffie-Hellman group for string: \"" + perfectForwardSecrecy + "\"");
+                "No conversion to Diffie-Hellman group for string: \"" + perfectForwardSecrecy + "\"");
     }
   }
 
+  @Nonnull
   private static EncryptionAlgorithm toEncryptionAlgorithm(String encryptionProtocol) {
     switch (encryptionProtocol) {
-      case "aes-128-cbc":
+      case "AES128":
         return EncryptionAlgorithm.AES_128_CBC;
+      case "AES256":
+        return EncryptionAlgorithm.AES_256_CBC;
+      case "AES128-GCM-16":
+        return EncryptionAlgorithm.AES_128_GCM;
+      case "AES256-GCM-16":
+        return EncryptionAlgorithm.AES_256_GCM;
       default:
         throw new BatfishException(
-            "No conversion to encryption algorithm for string: \"" + encryptionProtocol + "\"");
+                "No conversion to encryption algorithm for string: \"" + encryptionProtocol + "\"");
     }
   }
 
+  @Nonnull
   private static IkeHashingAlgorithm toIkeAuthenticationAlgorithm(String ikeAuthProtocol) {
     switch (ikeAuthProtocol) {
-      case "sha1":
+      case "SHA1":
         return IkeHashingAlgorithm.SHA1;
-
+      case "SHA2-256":
+        return IkeHashingAlgorithm.SHA_256;
+      case "SHA2-384":
+        return IkeHashingAlgorithm.SHA_384;
+      case "SHA2-512":
+        return IkeHashingAlgorithm.SHA_512;
       default:
         throw new BatfishException(
-            "No conversion to ike authentication algorithm for string: \""
-                + ikeAuthProtocol
-                + "\"");
+                "No conversion to ike authentication algorithm for string: \""
+                        + ikeAuthProtocol
+                        + "\"");
     }
   }
 
+  @Nonnull
   private static IpsecAuthenticationAlgorithm toIpsecAuthenticationAlgorithm(
-      String ipsecAuthProtocol) {
+          String ipsecAuthProtocol) {
     switch (ipsecAuthProtocol) {
-      case "hmac-sha1-96":
+      case "SHA1":
         return IpsecAuthenticationAlgorithm.HMAC_SHA1_96;
+      case "SHA2-256":
+        return IpsecAuthenticationAlgorithm.HMAC_SHA_256_128;
+      case "SHA2-384":
+        return IpsecAuthenticationAlgorithm.HMAC_SHA_384;
+      case "SHA2-512":
+        return IpsecAuthenticationAlgorithm.HMAC_SHA_512;
       default:
         throw new BatfishException(
-            "No conversion to ipsec authentication algorithm for string: \""
-                + ipsecAuthProtocol
-                + "\"");
+                "No conversion to ipsec authentication algorithm for string: \""
+                        + ipsecAuthProtocol
+                        + "\"");
     }
   }
 
