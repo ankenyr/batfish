@@ -100,6 +100,7 @@ public interface AwsVpcEntity {
   String JSON_KEY_PHASE1_ENCRYPTION_ALGORITHMS = "Phase1EncryptionAlgorithms";
   String JSON_KEY_PHASE1_INTEGRITY_ALGORITHMS = "Phase1IntegrityAlgorithms";
   String JSON_KEY_PHASE1_DH_GROUP_NUMBERS = "Phase1DHGroupNumbers";
+  String JSON_KEY_PHASE1_LIFETIME_SECONDS = "Phase1LifetimeSeconds";
   String JSON_KEY_PHASE2_ENCRYPTION_ALGORITHMS = "Phase2EncryptionAlgorithms";
   String JSON_KEY_PHASE2_INTEGRITY_ALGORITHMS = "Phase2IntegrityAlgorithms";
   String JSON_KEY_PHASE2_DH_GROUP_NUMBERS = "Phase2DHGroupNumbers";

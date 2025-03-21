@@ -65,7 +65,7 @@ import org.batfish.datamodel.routing_policy.statement.Statement;
 import org.batfish.datamodel.routing_policy.statement.Statements;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+//import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -229,50 +229,6 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
     }
   }
 
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  @ParametersAreNonnullByDefault
-  private static class Options {
-
-    @JsonCreator
-    private static Options create(
-        @JsonProperty(JSON_KEY_STATIC_ROUTES_ONLY) @Nullable Boolean staticRoutesOnly) {
-      return new Options(firstNonNull(staticRoutesOnly, false));
-    }
-
-    private final boolean _staticRoutesOnly;
-
-    private Options(boolean staticRoutesOnly) {
-      _staticRoutesOnly = staticRoutesOnly;
-    }
-
-    boolean getStaticRoutesOnly() {
-      return _staticRoutesOnly;
-    }
-  }
-
-  enum GatewayType {
-    TRANSIT,
-    VPN
-  }
-
-  private final @Nonnull String _customerGatewayId;
-
-  private final @Nonnull List<IpsecTunnel> _ipsecTunnels;
-
-  private final boolean _isBgpConnection;
-
-  private final @Nonnull List<Prefix> _routes;
-
-  private final boolean _staticRoutesOnly;
-
-  private final @Nonnull List<VgwTelemetry> _vgwTelemetrys;
-
-  private final @Nonnull String _vpnConnectionId;
-
-  private final @Nonnull GatewayType _awsGatewayType;
-
-  private final @Nonnull String _awsGatewayId;
-
   @JsonCreator
   private static VpnConnection create(
       @JsonProperty(JSON_KEY_VPN_CONNECTION_ID) @Nullable String vpnConnectionId,
@@ -320,20 +276,14 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
     Element vpnConnection = (Element) document.getElementsByTagName(XML_KEY_VPN_CONNECTION).item(0);
 
     // the field is absent for BGP connections and is "NoBGPVPNConnection" for static connections
-    boolean isBgpConnection =
-        vpnConnection
-                    .getElementsByTagName(AwsVpcEntity.XML_KEY_VPN_CONNECTION_ATTRIBUTES)
-                    .getLength()
-                == 0
-            || !Utils.textOfFirstXmlElementWithTag(
-                    vpnConnection, AwsVpcEntity.XML_KEY_VPN_CONNECTION_ATTRIBUTES)
-                .contains("NoBGP");
+    boolean isBgpConnection = !options.getStaticRoutesOnly();
 
-    NodeList nodeList = document.getElementsByTagName(XML_KEY_IPSEC_TUNNEL);
+//    NodeList nodeList = document.getElementsByTagName(XML_KEY_IPSEC_TUNNEL);
 
-    for (int index = 0; index < nodeList.getLength(); index++) {
-      Element ipsecTunnel = (Element) nodeList.item(index);
-      ipsecTunnels.add(IpsecTunnel.create(ipsecTunnel, isBgpConnection));
+    for (int index = 0; index < options.getTunnelOptions().size(); index++) {
+      TunnelOptions ipsecTunnel = options.getTunnelOptionAtIndex(index);
+      IpsecTunnel ipt = IpsecTunnel.create(ipsecTunnel, isBgpConnection, options.getTunnelOptionAtIndex(index), customerGatewayId);
+      ipsecTunnels.add(ipt);
     }
 
     return new VpnConnection(
@@ -348,6 +298,69 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
             .collect(ImmutableList.toImmutableList()),
         vgwTelemetrys,
         options.getStaticRoutesOnly());
+  }
+
+  /**
+   * Converts AWS IKE Phase 1 proposals into Batfish's internal model.
+   */
+  private static @Nonnull IkePhase1Proposal toIkePhase1Proposal(
+      String proposalName, IpsecTunnel ipsecTunnel) {
+    IkePhase1Proposal ikePhase1Proposal = new IkePhase1Proposal(proposalName);
+    if (ipsecTunnel.getIkePreSharedKeyHash() != null) {
+      ikePhase1Proposal.setAuthenticationMethod(IkeAuthenticationMethod.PRE_SHARED_KEYS);
+    }
+    ikePhase1Proposal.setHashingAlgorithm(
+            toIkeAuthenticationAlgorithm(ipsecTunnel.getIkeAuthProtocol().get(0).getValue()));
+    ikePhase1Proposal.setDiffieHellmanGroup(
+            toDiffieHellmanGroup(ipsecTunnel.getIkePerfectForwardSecrecy().get(0).getValue()));
+    ikePhase1Proposal.setEncryptionAlgorithm(
+            toEncryptionAlgorithm(ipsecTunnel.getIkeEncryptionProtocol().get(0).getValue()));
+    return ikePhase1Proposal;
+  }
+
+  private static @Nonnull IpsecPhase2Proposal toIpsecPhase2Proposal(
+      IpsecTunnel ipsecTunnel, Warnings warnings) {
+    IpsecPhase2Proposal ipsecPhase2Proposal = new IpsecPhase2Proposal();
+    ipsecPhase2Proposal.setAuthenticationAlgorithm(
+            toIpsecAuthenticationAlgorithm(ipsecTunnel.getIpsecAuthProtocol().get(0).getValue()));
+    ipsecPhase2Proposal.setEncryptionAlgorithm(
+            toEncryptionAlgorithm(ipsecTunnel.getIpsecEncryptionProtocol().get(0).getValue()));
+    ipsecPhase2Proposal.setProtocols(
+        ImmutableSortedSet.of(toIpsecProtocol(ipsecTunnel.getIpsecProtocol())));
+    ipsecPhase2Proposal.setIpsecEncapsulationMode(
+        toIpsecEncapdulationMode(ipsecTunnel.getIpsecMode(), warnings));
+    return ipsecPhase2Proposal;
+  }
+  enum GatewayType {
+    TRANSIT,
+    VPN
+  }
+
+  private final @Nonnull String _customerGatewayId;
+
+  private final @Nonnull List<IpsecTunnel> _ipsecTunnels;
+
+  private final boolean _isBgpConnection;
+
+  private final @Nonnull List<Prefix> _routes;
+
+  private final boolean _staticRoutesOnly;
+
+  private final @Nonnull List<VgwTelemetry> _vgwTelemetrys;
+
+  private final @Nonnull String _vpnConnectionId;
+
+  private final @Nonnull GatewayType _awsGatewayType;
+
+  private final @Nonnull String _awsGatewayId;
+
+  private static @Nonnull IpsecPhase2Policy toIpsecPhase2Policy(
+      IpsecTunnel ipsecTunnel, String ipsecPhase2Proposal) {
+    IpsecPhase2Policy ipsecPhase2Policy = new IpsecPhase2Policy();
+    ipsecPhase2Policy.setPfsKeyGroup(
+            toDiffieHellmanGroup(ipsecTunnel.getIpsecPerfectForwardSecrecy().get(0).getValue()));
+    ipsecPhase2Policy.setProposals(ImmutableList.of(ipsecPhase2Proposal));
+    return ipsecPhase2Policy;
   }
 
   VpnConnection(
@@ -371,19 +384,41 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
     _staticRoutesOnly = staticRoutesOnly;
   }
 
-  private static @Nonnull IkePhase1Proposal toIkePhase1Proposal(
-      String proposalName, IpsecTunnel ipsecTunnel) {
-    IkePhase1Proposal ikePhase1Proposal = new IkePhase1Proposal(proposalName);
-    if (ipsecTunnel.getIkePreSharedKeyHash() != null) {
-      ikePhase1Proposal.setAuthenticationMethod(IkeAuthenticationMethod.PRE_SHARED_KEYS);
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @ParametersAreNonnullByDefault
+  private static class Options {
+
+    private final List<TunnelOptions> _tunnelOptions;
+
+    private final boolean _staticRoutesOnly;
+    private Options(List<TunnelOptions> tunnelOptions, boolean staticRoutesOnly) {
+      _tunnelOptions = tunnelOptions;
+      _staticRoutesOnly = staticRoutesOnly;
     }
-    ikePhase1Proposal.setHashingAlgorithm(
-        toIkeAuthenticationAlgorithm(ipsecTunnel.getIkeAuthProtocol()));
-    ikePhase1Proposal.setDiffieHellmanGroup(
-        toDiffieHellmanGroup(ipsecTunnel.getIkePerfectForwardSecrecy()));
-    ikePhase1Proposal.setEncryptionAlgorithm(
-        toEncryptionAlgorithm(ipsecTunnel.getIkeEncryptionProtocol()));
-    return ikePhase1Proposal;
+
+    @Nonnull
+    @JsonCreator
+    private static Options create(
+            @JsonProperty(JSON_KEY_TUNNEL_OPTIONS) @Nullable List<TunnelOptions> tunnelOptions,
+        @JsonProperty(JSON_KEY_STATIC_ROUTES_ONLY) @Nullable Boolean staticRoutesOnly) {
+      return new Options(firstNonNull(tunnelOptions, Collections.emptyList()), firstNonNull(staticRoutesOnly, false));
+    }
+
+    TunnelOptions getTunnelOptionAtIndex(int index) {
+      if (index < 0 || index >= _tunnelOptions.size()) {
+        throw new IndexOutOfBoundsException("Index " + index + " is out of bounds for length " + _tunnelOptions.size());
+      }
+      return _tunnelOptions.get(index);
+    }
+
+    @Nonnull
+    List<TunnelOptions> getTunnelOptions() {
+      return _tunnelOptions;
+    }
+
+    boolean getStaticRoutesOnly() {
+      return _staticRoutesOnly;
+    }
   }
 
   private static @Nonnull IkePhase1Key toIkePhase1PreSharedKey(
@@ -410,27 +445,247 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
     return ikePhase1Policy;
   }
 
-  private static @Nonnull IpsecPhase2Proposal toIpsecPhase2Proposal(
-      IpsecTunnel ipsecTunnel, Warnings warnings) {
-    IpsecPhase2Proposal ipsecPhase2Proposal = new IpsecPhase2Proposal();
-    ipsecPhase2Proposal.setAuthenticationAlgorithm(
-        toIpsecAuthenticationAlgorithm(ipsecTunnel.getIpsecAuthProtocol()));
-    ipsecPhase2Proposal.setEncryptionAlgorithm(
-        toEncryptionAlgorithm(ipsecTunnel.getIpsecEncryptionProtocol()));
-    ipsecPhase2Proposal.setProtocols(
-        ImmutableSortedSet.of(toIpsecProtocol(ipsecTunnel.getIpsecProtocol())));
-    ipsecPhase2Proposal.setIpsecEncapsulationMode(
-        toIpsecEncapdulationMode(ipsecTunnel.getIpsecMode(), warnings));
-    return ipsecPhase2Proposal;
+  public static class Value implements Serializable {
+    @Nonnull
+    private final String _value;
+
+    @JsonCreator
+    public Value(@JsonProperty("Value") @Nullable String value) {
+      _value = value != null ? value : "";
+    }
+
+    @Nonnull
+    String getValue() {
+      return _value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof Value)) {
+        return false;
+      }
+      Value that = (Value) o;
+      return this._value.equals(that._value);
+    }
+
+    ;
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(
+              _value);
+    }
+
   }
 
-  private static @Nonnull IpsecPhase2Policy toIpsecPhase2Policy(
-      IpsecTunnel ipsecTunnel, String ipsecPhase2Proposal) {
-    IpsecPhase2Policy ipsecPhase2Policy = new IpsecPhase2Policy();
-    ipsecPhase2Policy.setPfsKeyGroup(
-        toDiffieHellmanGroup(ipsecTunnel.getIpsecPerfectForwardSecrecy()));
-    ipsecPhase2Policy.setProposals(ImmutableList.of(ipsecPhase2Proposal));
-    return ipsecPhase2Policy;
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  @ParametersAreNonnullByDefault
+  public static class TunnelOptions implements Serializable {
+    @Nullable
+    private final List<Value> _ikeVersions;
+    @Nullable
+    private final List<Value> _phase1EncryptionAlgorithm;
+    @Nullable
+    private final List<Value> _phase1IntegrityAlgorithm;
+    @Nullable
+    private final List<Value> _phase1DHGroupNumbers;
+    @Nullable
+    private final List<Value> _phase2EncryptionAlgorithm;
+    @Nullable
+    private final List<Value> _phase2IntegrityAlgorithms;
+    @Nullable
+    private final List<Value> _phase2DHGroupNumbers;
+    @Nullable
+    private final Ip _outsideIpAddress;
+    @Nullable
+    private final String _tunnelInsideCidr;
+    @Nullable
+    private final Integer _replayWindowSize;
+    @Nullable
+    private final String _presharedKey;
+    @Nullable
+    private final Integer _phase2LifetimeSeconds;
+
+    private TunnelOptions(
+            @Nullable List<Value> ikeVersions,
+            @Nullable List<Value> phase1EncryptionAlgorithm,
+            @Nullable List<Value> phase1IntegrityAlgorithm,
+            @Nullable List<Value> phase1DHGroupNumbers,
+            @Nullable List<Value> phase2EncryptionAlgorithm,
+            @Nullable List<Value> phase2IntegrityAlgorithms,
+            @Nullable List<Value> phase2DHGroupNumbers,
+            @Nullable Ip outsideIpAddress,
+            @Nullable String tunnelInsideCidr,
+            @Nullable Integer replayWindowSize,
+            @Nullable String presharedKey,
+            @Nullable Integer phase2LifetimeSeconds
+    ) {
+      _ikeVersions = ikeVersions;
+      _phase1EncryptionAlgorithm = phase1EncryptionAlgorithm;
+      _phase1IntegrityAlgorithm = phase1IntegrityAlgorithm;
+      _phase1DHGroupNumbers = phase1DHGroupNumbers;
+      _phase2EncryptionAlgorithm = phase2EncryptionAlgorithm;
+      _phase2IntegrityAlgorithms = phase2IntegrityAlgorithms;
+      _phase2DHGroupNumbers = phase2DHGroupNumbers;
+      _outsideIpAddress = outsideIpAddress;
+      _tunnelInsideCidr = tunnelInsideCidr;
+      _replayWindowSize = replayWindowSize;
+      _presharedKey = presharedKey;
+      _phase2LifetimeSeconds = phase2LifetimeSeconds;
+    }
+
+    @Nonnull
+    @JsonCreator
+    private static TunnelOptions create(
+            @JsonProperty(JSON_KEY_IKE_VERSIONS) @Nullable List<Value> ikeVersions,
+            @JsonProperty(JSON_KEY_PHASE1_ENCRYPTION_ALGORITHMS) @Nullable List<Value> phase1EncryptionAlgorithm,
+            @JsonProperty(JSON_KEY_PHASE1_INTEGRITY_ALGORITHMS) @Nullable List<Value> phase1IntegrityAlgorithm,
+            @JsonProperty(JSON_KEY_PHASE1_DH_GROUP_NUMBERS) @Nullable List<Value> phase1DHGroupNumbers,
+            @JsonProperty(JSON_KEY_PHASE2_ENCRYPTION_ALGORITHMS) @Nullable List<Value> phase2EncryptionAlgorithm,
+            @JsonProperty(JSON_KEY_PHASE2_INTEGRITY_ALGORITHMS) @Nullable List<Value> phase2IntegrityAlgorithms,
+            @JsonProperty(JSON_KEY_PHASE2_DH_GROUP_NUMBERS) @Nullable List<Value> phase2DHGroupNumbers,
+            @JsonProperty(JSON_KEY_OUTSIDE_IP_ADDRESS) @Nullable String outsideIpAddress,
+            @JsonProperty(JSON_KEY_TUNNEL_INSIDE_CIDR) @Nullable String tunnelInsideCidr,
+            @JsonProperty(JSON_KEY_REPLAY_WINDOW_SIZE) @Nullable Integer replayWindowSize,
+            @JsonProperty(JSON_KEY_PRESHARED_KEY) @Nullable String presharedKey,
+            @JsonProperty(JSON_KEY_PHASE2_LIFETIME_SECONDS) @Nullable Integer phase2LifetimeSeconds
+    ) {
+      checkArgument(outsideIpAddress != null, "Out");
+      return new TunnelOptions(
+              ikeVersions,
+              firstNonNull(phase1EncryptionAlgorithm, List.of(
+                      new Value("AES128"),
+                      new Value("AES256"),
+                      new Value("AES128-GCM-16"),
+                      new Value("AES256-GCM-16")
+              )),
+              firstNonNull(phase1IntegrityAlgorithm, List.of(
+                      new Value("SHA1"),
+                      new Value("SHA2-256"),
+                      new Value("SHA2-384"),
+                      new Value("SHA2-512")
+              )),
+              firstNonNull(phase1DHGroupNumbers, List.of(
+                      new Value("2"),
+                      new Value("14"),
+                      new Value("15"),
+                      new Value("16"),
+                      new Value("17"),
+                      new Value("18"),
+                      new Value("19"),
+                      new Value("20"),
+                      new Value("21"),
+                      new Value("22"),
+                      new Value("23"),
+                      new Value("24")
+              )),
+              firstNonNull(phase2EncryptionAlgorithm, List.of(
+                      new Value("AES128"),
+                      new Value("AES256"),
+                      new Value("AES128-GCM-16"),
+                      new Value("AES256-GCM-16")
+              )),
+              firstNonNull(phase2IntegrityAlgorithms, List.of(
+                      new Value("SHA1"),
+                      new Value("SHA2-256"),
+                      new Value("SHA2-384"),
+                      new Value("SHA2-512")
+              )),
+              firstNonNull(phase2DHGroupNumbers, List.of(
+                      new Value("2"),
+                      new Value("5"),
+                      new Value("14"),
+                      new Value("15"),
+                      new Value("16"),
+                      new Value("17"),
+                      new Value("18"),
+                      new Value("19"),
+                      new Value("20"),
+                      new Value("21"),
+                      new Value("22"),
+                      new Value("23"),
+                      new Value("24")
+              )),
+              Ip.parse(outsideIpAddress),
+              tunnelInsideCidr,
+              firstNonNull(replayWindowSize, 28800),
+              presharedKey,
+              firstNonNull(phase2LifetimeSeconds, 3600)
+      );
+    }
+
+    @Nullable
+    List<Value> getIkeVersion() {
+      return _ikeVersions;
+    }
+
+    @Nullable
+    List<Value> getPhase1EncryptionAlgorithm() {
+      return _phase1EncryptionAlgorithm;
+    }
+
+    @Nullable
+    List<Value> getPhase1IntegrityAlgorithm() {
+      return _phase1IntegrityAlgorithm;
+    }
+
+    @Nullable
+    List<Value> getPhase1DHGroupNumbers() {
+      return _phase1DHGroupNumbers;
+    }
+
+    @Nullable
+    List<Value> getPhase2EncryptionAlgorithm() {
+      return _phase2EncryptionAlgorithm;
+    }
+
+    @Nullable
+    List<Value> getPhase2IntegrityAlgorithm() {
+      return _phase2IntegrityAlgorithms;
+    }
+
+    @Nullable
+    List<Value> getPhase2DHGroupNumbers() {
+      return _phase2DHGroupNumbers;
+    }
+
+    @Nullable
+    Ip getOutsideIpAddress() {
+      return _outsideIpAddress;
+    }
+
+    ;
+
+    @Nullable
+    String getTunnelInsideCidr() {
+      return _tunnelInsideCidr;
+    }
+
+    ;
+
+    @Nullable
+    Integer getReplayWindowSize() {
+      return _replayWindowSize;
+    }
+
+    ;
+
+    @Nullable
+    String getPresharedKey() {
+      return _presharedKey;
+    }
+
+    ;
+
+    @Nullable
+    Integer getPhase2LifetimeSeconds() {
+      return _phase2LifetimeSeconds;
+    }
+
+    ;
   }
 
   /**
