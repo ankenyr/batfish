@@ -5,43 +5,58 @@ import static com.google.common.base.MoreObjects.firstNonNull;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSortedSet;
-import java.io.Serializable;
+import org.batfish.common.util.ComparableStructure;
+
+import java.util.List;
 import java.util.Objects;
 import java.util.SortedSet;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class IpsecPhase2Proposal implements Serializable {
+public class IpsecPhase2Proposal extends ComparableStructure<String> {
 
   private static final String PROP_AUTHENTICATION_ALGORITHM = "authenticationAlgorithm";
   private static final String PROP_ENCRYPTION_ALGORITHM = "encryptionAlgorithm";
   private static final String PROP_IPSEC_ENCAPSULATION_MODE = "ipsecEncapsulationMode";
   private static final String PROP_PROTOCOLS = "protocols";
+  private static final String PROP_PFS_KEY_GROUP = "pfsKeyGroup";
+  private DiffieHellmanGroup _pfsKeyGroup;
 
-  private IpsecAuthenticationAlgorithm _authenticationAlgorithm;
+  private List<IpsecAuthenticationAlgorithm> _authenticationAlgorithm;
 
-  private EncryptionAlgorithm _encryptionAlgorithm;
+  private List<EncryptionAlgorithm> _encryptionAlgorithm;
 
   private @Nonnull IpsecEncapsulationMode _ipsecEncapsulationMode;
 
   private @Nonnull SortedSet<IpsecProtocol> _protocols;
 
   @JsonCreator
-  public IpsecPhase2Proposal() {
-    _protocols = ImmutableSortedSet.of();
-    _ipsecEncapsulationMode = IpsecEncapsulationMode.TUNNEL;
+  public IpsecPhase2Proposal(@JsonProperty(PROP_NAME) String name) {
+    super(name);
   }
-
   /** Authentication algorithm to be used with this IPSec Proposal. */
   @JsonProperty(PROP_AUTHENTICATION_ALGORITHM)
-  public IpsecAuthenticationAlgorithm getAuthenticationAlgorithm() {
+  public List<IpsecAuthenticationAlgorithm> getAuthenticationAlgorithms() {
     return _authenticationAlgorithm;
   }
 
   /** Encryption algorithm to be used with this IPSec Proposal. */
   @JsonProperty(PROP_ENCRYPTION_ALGORITHM)
-  public EncryptionAlgorithm getEncryptionAlgorithm() {
+  public List<EncryptionAlgorithm> getEncryptionAlgorithm() {
     return _encryptionAlgorithm;
+  }
+
+  @JsonProperty(PROP_ENCRYPTION_ALGORITHM)
+  public void setEncryptionAlgorithm(@Nullable List<EncryptionAlgorithm> encryptionAlgorithm) {
+    _encryptionAlgorithm = encryptionAlgorithm;
+  }
+
+  /**
+   * Diffie-Hellman group to be used for Perfect Forward Secrecy.
+   */
+  @JsonProperty(PROP_PFS_KEY_GROUP)
+  public DiffieHellmanGroup getPfsKeyGroup() {
+    return _pfsKeyGroup;
   }
 
   /** IPSec encapsulation mode to be used with this IPSec Proposal. */
@@ -56,15 +71,15 @@ public class IpsecPhase2Proposal implements Serializable {
     return _protocols;
   }
 
-  @JsonProperty(PROP_AUTHENTICATION_ALGORITHM)
-  public void setAuthenticationAlgorithm(
-      @Nullable IpsecAuthenticationAlgorithm authenticationAlgorithm) {
-    _authenticationAlgorithm = authenticationAlgorithm;
+  @JsonProperty(PROP_PFS_KEY_GROUP)
+  public void setPfsKeyGroup(@Nullable DiffieHellmanGroup dhGroup) {
+    _pfsKeyGroup = dhGroup;
   }
 
-  @JsonProperty(PROP_ENCRYPTION_ALGORITHM)
-  public void setEncryptionAlgorithm(@Nullable EncryptionAlgorithm encryptionAlgorithm) {
-    _encryptionAlgorithm = encryptionAlgorithm;
+  @JsonProperty(PROP_AUTHENTICATION_ALGORITHM)
+  public void setAuthenticationAlgorithm(
+          @Nullable List<IpsecAuthenticationAlgorithm> authenticationAlgorithm) {
+    _authenticationAlgorithm = authenticationAlgorithm;
   }
 
   @JsonProperty(PROP_IPSEC_ENCAPSULATION_MODE)
@@ -89,6 +104,7 @@ public class IpsecPhase2Proposal implements Serializable {
     return Objects.equals(_authenticationAlgorithm, other._authenticationAlgorithm)
         && Objects.equals(_encryptionAlgorithm, other._encryptionAlgorithm)
         && Objects.equals(_ipsecEncapsulationMode, other._ipsecEncapsulationMode)
+            && Objects.equals(_pfsKeyGroup, other._pfsKeyGroup)
         && Objects.equals(_protocols, other._protocols);
   }
 

@@ -2,6 +2,8 @@ package org.batfish.datamodel;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
 import java.util.Objects;
 import org.batfish.common.util.ComparableStructure;
 
@@ -18,9 +20,9 @@ public class IkePhase1Proposal extends ComparableStructure<String> {
 
   private DiffieHellmanGroup _diffieHellmanGroup;
 
-  private EncryptionAlgorithm _encryptionAlgorithm;
+  private List<EncryptionAlgorithm> _encryptionAlgorithm;
 
-  private IkeHashingAlgorithm _hashingAlgorithm;
+  private List<IkeHashingAlgorithm> _hashingAlgorithm;
 
   private Integer _lifetimeSeconds;
 
@@ -43,14 +45,13 @@ public class IkePhase1Proposal extends ComparableStructure<String> {
 
   /** Encryption algorithm to use for this IKE phase 1 proposal. */
   @JsonProperty(PROP_ENCRYPTION_ALGORITHM)
-  public EncryptionAlgorithm getEncryptionAlgorithm() {
+  public List<EncryptionAlgorithm> getEncryptionAlgorithms() {
     return _encryptionAlgorithm;
   }
 
-  /** Hashing algorithm to be used for this IKE phase 1 proposal. */
-  @JsonProperty(PROP_HASHING_ALGORITHM)
-  public IkeHashingAlgorithm getHashingAlgorithm() {
-    return _hashingAlgorithm;
+  @JsonProperty(PROP_ENCRYPTION_ALGORITHM)
+  public void setEncryptionAlgorithms(List<EncryptionAlgorithm> encryptionAlgorithm) {
+    _encryptionAlgorithm = encryptionAlgorithm;
   }
 
   /** Lifetime in seconds to use for this IKE phase 1 proposal. */
@@ -69,13 +70,14 @@ public class IkePhase1Proposal extends ComparableStructure<String> {
     _diffieHellmanGroup = diffieHellmanGroup;
   }
 
-  @JsonProperty(PROP_ENCRYPTION_ALGORITHM)
-  public void setEncryptionAlgorithm(EncryptionAlgorithm encryptionAlgorithm) {
-    _encryptionAlgorithm = encryptionAlgorithm;
+  /** Hashing algorithm to be used for this IKE phase 1 proposal. */
+  @JsonProperty(PROP_HASHING_ALGORITHM)
+  public List<IkeHashingAlgorithm> getHashingAlgorithms() {
+    return _hashingAlgorithm;
   }
 
   @JsonProperty(PROP_HASHING_ALGORITHM)
-  public void setHashingAlgorithm(IkeHashingAlgorithm hashingAlgorithm) {
+  public void setHashingAlgorithms(List<IkeHashingAlgorithm> hashingAlgorithm) {
     _hashingAlgorithm = hashingAlgorithm;
   }
 

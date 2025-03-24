@@ -3,6 +3,8 @@ package org.batfish.representation.juniper;
 import java.io.Serializable;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import org.batfish.datamodel.DiffieHellmanGroup;
 import org.batfish.datamodel.EncryptionAlgorithm;
 import org.batfish.datamodel.IpsecAuthenticationAlgorithm;
 import org.batfish.datamodel.IpsecEncapsulationMode;
@@ -13,6 +15,8 @@ public class IpsecProposal implements Serializable {
   private IpsecAuthenticationAlgorithm _authenticationAlgorithm;
 
   private EncryptionAlgorithm _encryptionAlgorithm;
+
+  private DiffieHellmanGroup _pfsKeyGroup;
 
   private IpsecEncapsulationMode _ipsecEncapsulationMode;
 
@@ -47,6 +51,14 @@ public class IpsecProposal implements Serializable {
 
   public Integer getLifetimeSeconds() {
     return _lifetimeSeconds;
+  }
+
+  public DiffieHellmanGroup getPfsKeyGroup() {
+    return _pfsKeyGroup;
+  }
+
+  public void setPfsKeyGroup(DiffieHellmanGroup dhGroup) {
+    _pfsKeyGroup = dhGroup;
   }
 
   public String getName() {
