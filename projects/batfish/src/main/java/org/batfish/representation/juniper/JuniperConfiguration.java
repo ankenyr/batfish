@@ -1861,14 +1861,15 @@ public final class JuniperConfiguration extends VendorConfiguration {
     return ikePhase1Policy;
   }
 
-  private IkePhase1Proposal toIkePhase1Proposal(IkeProposal ikeProposal) {
-    IkePhase1Proposal ikePhase1Proposal = new IkePhase1Proposal(ikeProposal.getName());
-    ikePhase1Proposal.setDiffieHellmanGroup(ikeProposal.getDiffieHellmanGroup());
-    ikePhase1Proposal.setAuthenticationMethod(ikeProposal.getAuthenticationMethod());
-    ikePhase1Proposal.setEncryptionAlgorithm(ikeProposal.getEncryptionAlgorithm());
-    ikePhase1Proposal.setLifetimeSeconds(ikeProposal.getLifetimeSeconds());
-    ikePhase1Proposal.setHashingAlgorithm(ikeProposal.getAuthenticationAlgorithm());
-    return ikePhase1Proposal;
+  private static IpsecPhase2Proposal toIpsecPhase2Proposal(IpsecProposal oldIpsecProposal) {
+    IpsecPhase2Proposal ipsecPhase2Proposal = new IpsecPhase2Proposal();
+    ipsecPhase2Proposal.setAuthenticationAlgorithm(
+        List.of(oldIpsecProposal.getAuthenticationAlgorithm()));
+    ipsecPhase2Proposal.setEncryptionAlgorithm(List.of(oldIpsecProposal.getEncryptionAlgorithm()));
+    ipsecPhase2Proposal.setProtocols(oldIpsecProposal.getProtocols());
+    ipsecPhase2Proposal.setIpsecEncapsulationMode(oldIpsecProposal.getIpsecEncapsulationMode());
+
+    return ipsecPhase2Proposal;
   }
 
   /**
@@ -2845,14 +2846,14 @@ public final class JuniperConfiguration extends VendorConfiguration {
     return ipsecPhase2Policy;
   }
 
-  private static IpsecPhase2Proposal toIpsecPhase2Proposal(IpsecProposal oldIpsecProposal) {
-    IpsecPhase2Proposal ipsecPhase2Proposal = new IpsecPhase2Proposal();
-    ipsecPhase2Proposal.setAuthenticationAlgorithm(oldIpsecProposal.getAuthenticationAlgorithm());
-    ipsecPhase2Proposal.setEncryptionAlgorithm(oldIpsecProposal.getEncryptionAlgorithm());
-    ipsecPhase2Proposal.setProtocols(oldIpsecProposal.getProtocols());
-    ipsecPhase2Proposal.setIpsecEncapsulationMode(oldIpsecProposal.getIpsecEncapsulationMode());
-
-    return ipsecPhase2Proposal;
+  private IkePhase1Proposal toIkePhase1Proposal(IkeProposal ikeProposal) {
+    IkePhase1Proposal ikePhase1Proposal = new IkePhase1Proposal(ikeProposal.getName());
+    ikePhase1Proposal.setDiffieHellmanGroup(ikeProposal.getDiffieHellmanGroup());
+    ikePhase1Proposal.setAuthenticationMethod(ikeProposal.getAuthenticationMethod());
+    ikePhase1Proposal.setEncryptionAlgorithms(List.of(ikeProposal.getEncryptionAlgorithm()));
+    ikePhase1Proposal.setLifetimeSeconds(ikeProposal.getLifetimeSeconds());
+    ikePhase1Proposal.setHashingAlgorithms(List.of(ikeProposal.getAuthenticationAlgorithm()));
+    return ikePhase1Proposal;
   }
 
   /** Convert address book into corresponding IpSpaces */

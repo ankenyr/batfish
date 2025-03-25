@@ -2043,6 +2043,7 @@ public final class CiscoXrConfiguration extends VendorConfiguration {
     // ISAKMP policies to IKE Phase 1 proposals
     for (Entry<Integer, IsakmpPolicy> e : _isakmpPolicies.entrySet()) {
       IkePhase1Proposal ikePhase1Proposal = toIkePhase1Proposal(e.getValue());
+      List<IkePhase1Proposal> ikePhase1ProposalList = List.of(ikePhase1Proposal);
       c.getIkePhase1Proposals().put(ikePhase1Proposal.getName(), ikePhase1Proposal);
     }
     resolveKeyringIsakmpProfileAddresses();

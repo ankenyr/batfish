@@ -156,8 +156,9 @@ public class AwsHostTest {
         hasNegotiatedIpsecP2Proposal(
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -166,8 +167,9 @@ public class AwsHostTest {
         hasNegotiatedIpsecP2Proposal(
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -209,8 +211,9 @@ public class AwsHostTest {
         hasNegotiatedIpsecP2Proposal(
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -219,8 +222,9 @@ public class AwsHostTest {
         hasNegotiatedIpsecP2Proposal(
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -229,8 +233,9 @@ public class AwsHostTest {
         hasNegotiatedIpsecP2Proposal(
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -239,8 +244,9 @@ public class AwsHostTest {
         hasNegotiatedIpsecP2Proposal(
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));

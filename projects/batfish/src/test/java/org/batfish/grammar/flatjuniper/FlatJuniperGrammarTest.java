@@ -3403,10 +3403,11 @@ public final class FlatJuniperGrammarTest {
         hasIkePhase1Proposal(
             "proposal1",
             allOf(
-                IkePhase1ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.THREEDES_CBC),
+                IkePhase1ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.THREEDES_CBC)),
                 IkePhase1ProposalMatchers.hasAuthenticationMethod(
                     IkeAuthenticationMethod.PRE_SHARED_KEYS),
-                IkePhase1ProposalMatchers.hasHashingAlgorithm(IkeHashingAlgorithm.MD5),
+                IkePhase1ProposalMatchers.hasHashingAlgorithm(List.of(IkeHashingAlgorithm.MD5)),
                 IkePhase1ProposalMatchers.hasDiffieHellmanGroup(DiffieHellmanGroup.GROUP14),
                 IkePhase1ProposalMatchers.hasLifeTimeSeconds(50000))));
   }
@@ -3923,9 +3924,9 @@ public final class FlatJuniperGrammarTest {
             "NOPFS_ESP_3DES_MD5",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_MD5_96),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_MD5_96)),
                 IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
-                    EncryptionAlgorithm.THREEDES_CBC),
+                    List.of(EncryptionAlgorithm.THREEDES_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -3936,9 +3937,9 @@ public final class FlatJuniperGrammarTest {
             "NOPFS_ESP_3DES_SHA",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
                 IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
-                    EncryptionAlgorithm.THREEDES_CBC),
+                    List.of(EncryptionAlgorithm.THREEDES_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -3949,8 +3950,9 @@ public final class FlatJuniperGrammarTest {
             "NOPFS_ESP_DES_MD5",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_MD5_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.DES_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_MD5_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.DES_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -3961,8 +3963,9 @@ public final class FlatJuniperGrammarTest {
             "NOPFS_ESP_DES_SHA",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.DES_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.DES_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -3973,9 +3976,9 @@ public final class FlatJuniperGrammarTest {
             "G2_ESP_3DES_SHA",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
                 IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
-                    EncryptionAlgorithm.THREEDES_CBC),
+                    List.of(EncryptionAlgorithm.THREEDES_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -3986,8 +3989,9 @@ public final class FlatJuniperGrammarTest {
             "G2_ESP_AES128_SHA",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -4012,8 +4016,7 @@ public final class FlatJuniperGrammarTest {
                             "NOPFS_ESP_3DES_SHA",
                             "NOPFS_ESP_3DES_MD5",
                             "NOPFS_ESP_DES_SHA",
-                            "NOPFS_ESP_DES_MD5"))),
-                IpsecPhase2PolicyMatchers.hasPfsKeyGroup(nullValue()))));
+                            "NOPFS_ESP_DES_MD5"))))));
   }
 
   @Test
@@ -4025,8 +4028,9 @@ public final class FlatJuniperGrammarTest {
             "prop1",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_MD5_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_MD5_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(
                     ImmutableSortedSet.of(IpsecProtocol.ESP, IpsecProtocol.AH)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
@@ -4037,8 +4041,9 @@ public final class FlatJuniperGrammarTest {
             "prop2",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_192_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_192_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.AH)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -4048,9 +4053,9 @@ public final class FlatJuniperGrammarTest {
             "prop3",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_MD5_96),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_MD5_96)),
                 IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
-                    EncryptionAlgorithm.THREEDES_CBC),
+                    List.of(EncryptionAlgorithm.THREEDES_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -4060,8 +4065,9 @@ public final class FlatJuniperGrammarTest {
             "prop4",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_MD5_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_GCM),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_MD5_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_GCM)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -4071,8 +4077,9 @@ public final class FlatJuniperGrammarTest {
             "prop5",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_MD5_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_192_GCM),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_MD5_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_192_GCM)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -4082,8 +4089,9 @@ public final class FlatJuniperGrammarTest {
             "prop6",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_MD5_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_256_GCM),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_MD5_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_256_GCM)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));

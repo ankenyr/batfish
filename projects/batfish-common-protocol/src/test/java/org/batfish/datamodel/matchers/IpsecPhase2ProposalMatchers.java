@@ -2,6 +2,7 @@ package org.batfish.datamodel.matchers;
 
 import static org.hamcrest.Matchers.equalTo;
 
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import org.batfish.datamodel.EncryptionAlgorithm;
@@ -13,6 +14,7 @@ import org.batfish.datamodel.matchers.IpsecPhase2ProposalMatchersImpl.HasEncrypt
 import org.batfish.datamodel.matchers.IpsecPhase2ProposalMatchersImpl.HasIpsecEncapsulationMode;
 import org.batfish.datamodel.matchers.IpsecPhase2ProposalMatchersImpl.HasProtocols;
 
+
 public final class IpsecPhase2ProposalMatchers {
 
   /**
@@ -20,7 +22,7 @@ public final class IpsecPhase2ProposalMatchers {
    * encryptionAlgorithm} matches specified {@code encryptionAlgorithm}
    */
   public static @Nonnull HasEncryptionAlgorithm hasEncryptionAlgorithm(
-      EncryptionAlgorithm encryptionAlgorithm) {
+      List<EncryptionAlgorithm> encryptionAlgorithm) {
     return new HasEncryptionAlgorithm(equalTo(encryptionAlgorithm));
   }
 
@@ -29,7 +31,7 @@ public final class IpsecPhase2ProposalMatchers {
    * authenticationAlgorithm} matches specified {@code authenticationAlgorithm}
    */
   public static @Nonnull HasAuthenticationAlgorithm hasAuthenticationAlgorithm(
-      IpsecAuthenticationAlgorithm ipsecAuthenticationAlgorithm) {
+      List<IpsecAuthenticationAlgorithm> ipsecAuthenticationAlgorithm) {
     return new HasAuthenticationAlgorithm(equalTo(ipsecAuthenticationAlgorithm));
   }
 

@@ -771,9 +771,9 @@ public class CiscoConversions {
     IkePhase1Proposal ikePhase1Proposal = new IkePhase1Proposal(isakmpPolicy.getName().toString());
     ikePhase1Proposal.setDiffieHellmanGroup(isakmpPolicy.getDiffieHellmanGroup());
     ikePhase1Proposal.setAuthenticationMethod(isakmpPolicy.getAuthenticationMethod());
-    ikePhase1Proposal.setEncryptionAlgorithm(isakmpPolicy.getEncryptionAlgorithm());
+    ikePhase1Proposal.setEncryptionAlgorithms(List.of(isakmpPolicy.getEncryptionAlgorithm()));
     ikePhase1Proposal.setLifetimeSeconds(isakmpPolicy.getLifetimeSeconds());
-    ikePhase1Proposal.setHashingAlgorithm(isakmpPolicy.getHashAlgorithm());
+    ikePhase1Proposal.setHashingAlgorithms(List.of(isakmpPolicy.getHashAlgorithm()));
     return ikePhase1Proposal;
   }
 
@@ -1114,8 +1114,15 @@ public class CiscoConversions {
 
   static IpsecPhase2Proposal toIpsecPhase2Proposal(IpsecTransformSet ipsecTransformSet) {
     IpsecPhase2Proposal ipsecPhase2Proposal = new IpsecPhase2Proposal();
-    ipsecPhase2Proposal.setAuthenticationAlgorithm(ipsecTransformSet.getAuthenticationAlgorithm());
-    ipsecPhase2Proposal.setEncryptionAlgorithm(ipsecTransformSet.getEncryptionAlgorithm());
+
+    if (ipsecTransformSet.getAuthenticationAlgorithm() != null) {
+      ipsecPhase2Proposal.setAuthenticationAlgorithm(
+          List.of(ipsecTransformSet.getAuthenticationAlgorithm()));
+    }
+    if (ipsecTransformSet.getEncryptionAlgorithm() != null) {
+      ipsecPhase2Proposal.setEncryptionAlgorithm(
+          List.of(ipsecTransformSet.getEncryptionAlgorithm()));
+    }
     ipsecPhase2Proposal.setProtocols(ipsecTransformSet.getProtocols());
     ipsecPhase2Proposal.setIpsecEncapsulationMode(ipsecTransformSet.getIpsecEncapsulationMode());
 

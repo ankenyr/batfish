@@ -340,8 +340,8 @@ public class IpsecUtil {
         if (initiatorProposal.isCompatibleWith(responderProposal)) {
           IkePhase1Proposal negotiatedProposal =
               new IkePhase1Proposal("~NEGOTIATED_IKE_P1_PROPOSAL~");
-          negotiatedProposal.setHashingAlgorithm(initiatorProposal.getHashingAlgorithm());
-          negotiatedProposal.setEncryptionAlgorithm(initiatorProposal.getEncryptionAlgorithm());
+          negotiatedProposal.setHashingAlgorithms(initiatorProposal.getHashingAlgorithms());
+          negotiatedProposal.setEncryptionAlgorithms(initiatorProposal.getEncryptionAlgorithms());
           negotiatedProposal.setDiffieHellmanGroup(initiatorProposal.getDiffieHellmanGroup());
           negotiatedProposal.setAuthenticationMethod(initiatorProposal.getAuthenticationMethod());
           if (initiatorProposal.getLifetimeSeconds() != null

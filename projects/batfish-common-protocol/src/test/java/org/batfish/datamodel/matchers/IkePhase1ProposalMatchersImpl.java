@@ -9,17 +9,19 @@ import org.batfish.datamodel.IkePhase1Proposal;
 import org.hamcrest.FeatureMatcher;
 import org.hamcrest.Matcher;
 
+import java.util.List;
+
 final class IkePhase1ProposalMatchersImpl {
 
   static final class HasHashingAlgorithm
-      extends FeatureMatcher<IkePhase1Proposal, IkeHashingAlgorithm> {
-    HasHashingAlgorithm(@Nonnull Matcher<? super IkeHashingAlgorithm> subMatcher) {
+      extends FeatureMatcher<IkePhase1Proposal, List<IkeHashingAlgorithm>> {
+    HasHashingAlgorithm(@Nonnull Matcher<? super List<IkeHashingAlgorithm>> subMatcher) {
       super(subMatcher, "An IKE Phase 1 Proposal with HashingAlgorithm:", "HashingAlgorithm");
     }
 
     @Override
-    protected IkeHashingAlgorithm featureValueOf(IkePhase1Proposal actual) {
-      return actual.getHashingAlgorithm();
+    protected List<IkeHashingAlgorithm> featureValueOf(IkePhase1Proposal actual) {
+      return actual.getHashingAlgorithms();
     }
   }
 
@@ -49,14 +51,14 @@ final class IkePhase1ProposalMatchersImpl {
   }
 
   static final class HasEncryptionAlgorithm
-      extends FeatureMatcher<IkePhase1Proposal, EncryptionAlgorithm> {
-    HasEncryptionAlgorithm(@Nonnull Matcher<? super EncryptionAlgorithm> subMatcher) {
+      extends FeatureMatcher<IkePhase1Proposal, List<EncryptionAlgorithm>> {
+    HasEncryptionAlgorithm(@Nonnull Matcher<? super List<EncryptionAlgorithm>> subMatcher) {
       super(subMatcher, "An IKE Phase 1 Proposal with EncryptionAlgorithm:", "EncryptionAlgorithm");
     }
 
     @Override
-    protected EncryptionAlgorithm featureValueOf(IkePhase1Proposal actual) {
-      return actual.getEncryptionAlgorithm();
+    protected List<EncryptionAlgorithm> featureValueOf(IkePhase1Proposal actual) {
+      return actual.getEncryptionAlgorithms();
     }
   }
 

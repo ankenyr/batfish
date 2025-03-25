@@ -180,10 +180,10 @@ public class VyosConfiguration extends VendorConfiguration {
           IkeProposal ikeProposal = ikeProposalEntry.getValue();
           IkePhase1Proposal ikePhase1Proposal = new IkePhase1Proposal(newIkeProposalName);
           ikePhase1Proposal.setDiffieHellmanGroup(ikeProposal.getDhGroup());
-          ikePhase1Proposal.setEncryptionAlgorithm(ikeProposal.getEncryptionAlgorithm());
+          ikePhase1Proposal.setEncryptionAlgorithms(List.of(ikeProposal.getEncryptionAlgorithm()));
           ikePhase1Proposal.setLifetimeSeconds(ikeGroup.getLifetimeSeconds());
-          ikePhase1Proposal.setHashingAlgorithm(
-              ikeProposal.getHashAlgorithm().toIkeAuthenticationAlgorithm());
+          ikePhase1Proposal.setHashingAlgorithms(
+              List.of(ikeProposal.getHashAlgorithm().toIkeAuthenticationAlgorithm()));
           ikePhase1Proposal.setAuthenticationMethod(ipsecPeer.getAuthenticationMode());
           ikePhase1ProposalMapBuilder.put(newIkeProposalName, ikePhase1Proposal);
           ikePhase1Policy.getIkePhase1Proposals().add(newIkeProposalName);
@@ -213,9 +213,9 @@ public class VyosConfiguration extends VendorConfiguration {
           EspProposal espProposal = espProposalEntry.getValue();
           IpsecPhase2Proposal ipsecPhase2Proposal = new IpsecPhase2Proposal();
           ipsecPhase2Proposal.setProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP));
-          ipsecPhase2Proposal.setEncryptionAlgorithm(espProposal.getEncryptionAlgorithm());
+          ipsecPhase2Proposal.setEncryptionAlgorithm(List.of(espProposal.getEncryptionAlgorithm()));
           ipsecPhase2Proposal.setAuthenticationAlgorithm(
-              espProposal.getHashAlgorithm().toIpsecAuthenticationAlgorithm());
+              List.of(espProposal.getHashAlgorithm().toIpsecAuthenticationAlgorithm()));
           ipsecPhase2ProposalMapBuilder.put(newIpsecProposalName, ipsecPhase2Proposal);
           ipsecPhase2Policy.getProposals().add(newIpsecProposalName);
         }

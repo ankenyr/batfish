@@ -53,14 +53,6 @@ public class IpsecProposal implements Serializable {
     return _lifetimeSeconds;
   }
 
-  public DiffieHellmanGroup getPfsKeyGroup() {
-    return _pfsKeyGroup;
-  }
-
-  public void setPfsKeyGroup(DiffieHellmanGroup dhGroup) {
-    _pfsKeyGroup = dhGroup;
-  }
-
   public String getName() {
     return _name;
   }

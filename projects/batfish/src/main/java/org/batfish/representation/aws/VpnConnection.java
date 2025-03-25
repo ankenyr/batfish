@@ -19,10 +19,12 @@ import com.google.common.collect.ImmutableSortedSet;
 import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -273,7 +275,8 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
 
     ImmutableList.Builder<IpsecTunnel> ipsecTunnels = new ImmutableList.Builder<>();
 
-    Element vpnConnection = (Element) document.getElementsByTagName(XML_KEY_VPN_CONNECTION).item(0);
+    //    Element vpnConnection = (Element)
+    // document.getElementsByTagName(XML_KEY_VPN_CONNECTION).item(0);
 
     // the field is absent for BGP connections and is "NoBGPVPNConnection" for static connections
     boolean isBgpConnection = !options.getStaticRoutesOnly();
@@ -300,36 +303,52 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
         options.getStaticRoutesOnly());
   }
 
-  /**
-   * Converts AWS IKE Phase 1 proposals into Batfish's internal model.
-   */
-  private static @Nonnull IkePhase1Proposal toIkePhase1Proposal(
+  /** Converts AWS IKE Phase 1 proposals into Batfish's internal model. */
+  private static @Nonnull List<IkePhase1Proposal> toIkePhase1Proposals(
       String proposalName, IpsecTunnel ipsecTunnel) {
-    IkePhase1Proposal ikePhase1Proposal = new IkePhase1Proposal(proposalName);
-    if (ipsecTunnel.getIkePreSharedKeyHash() != null) {
+    List<IkePhase1Proposal> proposals = new ArrayList<>();
+    for (Value value : ipsecTunnel.getIkePerfectForwardSecrecy()) {
+      String dhs = value.getValue();
+      IkePhase1Proposal ikePhase1Proposal = new IkePhase1Proposal(proposalName + "-dh" + dhs);
+      ikePhase1Proposal.setDiffieHellmanGroup(toDiffieHellmanGroup(dhs));
       ikePhase1Proposal.setAuthenticationMethod(IkeAuthenticationMethod.PRE_SHARED_KEYS);
+
+      ikePhase1Proposal.setHashingAlgorithms(
+          ipsecTunnel.getIkeAuthProtocol().stream()
+              .map(Value::getValue)
+              .map(VpnConnection::toIkeAuthenticationAlgorithm)
+              .collect(Collectors.toList()));
+      ikePhase1Proposal.setEncryptionAlgorithms(
+          ipsecTunnel.getIkeEncryptionProtocol().stream()
+              .map(Value::getValue)
+              .map(VpnConnection::toEncryptionAlgorithm)
+              .collect(Collectors.toList()));
+      proposals.add(ikePhase1Proposal);
     }
-    ikePhase1Proposal.setHashingAlgorithm(
-            toIkeAuthenticationAlgorithm(ipsecTunnel.getIkeAuthProtocol().get(0).getValue()));
-    ikePhase1Proposal.setDiffieHellmanGroup(
-            toDiffieHellmanGroup(ipsecTunnel.getIkePerfectForwardSecrecy().get(0).getValue()));
-    ikePhase1Proposal.setEncryptionAlgorithm(
-            toEncryptionAlgorithm(ipsecTunnel.getIkeEncryptionProtocol().get(0).getValue()));
-    return ikePhase1Proposal;
+    return proposals;
   }
 
-  private static @Nonnull IpsecPhase2Proposal toIpsecPhase2Proposal(
+  private static @Nonnull List<IpsecPhase2Proposal> toIpsecPhase2Proposal(
       IpsecTunnel ipsecTunnel, Warnings warnings) {
-    IpsecPhase2Proposal ipsecPhase2Proposal = new IpsecPhase2Proposal();
-    ipsecPhase2Proposal.setAuthenticationAlgorithm(
-            toIpsecAuthenticationAlgorithm(ipsecTunnel.getIpsecAuthProtocol().get(0).getValue()));
-    ipsecPhase2Proposal.setEncryptionAlgorithm(
-            toEncryptionAlgorithm(ipsecTunnel.getIpsecEncryptionProtocol().get(0).getValue()));
-    ipsecPhase2Proposal.setProtocols(
-        ImmutableSortedSet.of(toIpsecProtocol(ipsecTunnel.getIpsecProtocol())));
-    ipsecPhase2Proposal.setIpsecEncapsulationMode(
-        toIpsecEncapdulationMode(ipsecTunnel.getIpsecMode(), warnings));
-    return ipsecPhase2Proposal;
+    List<IpsecPhase2Proposal> proposals = new ArrayList<>();
+    for (Value value : ipsecTunnel.getIpsecPerfectForwardSecrecy()) {
+      IpsecPhase2Proposal ipsecPhase2Proposal = new IpsecPhase2Proposal();
+      ipsecPhase2Proposal.setAuthenticationAlgorithm(
+          ipsecTunnel.getIpsecAuthProtocol().stream()
+              .map(Value::getValue)
+              .map(VpnConnection::toIpsecAuthenticationAlgorithm)
+              .toList());
+      ipsecPhase2Proposal.setEncryptionAlgorithm(
+          ipsecTunnel.getIpsecEncryptionProtocol().stream()
+              .map(Value::getValue)
+              .map(VpnConnection::toEncryptionAlgorithm)
+              .toList());
+      ipsecPhase2Proposal.setProtocols(
+          ImmutableSortedSet.of(toIpsecProtocol(ipsecTunnel.getIpsecProtocol())));
+      ipsecPhase2Proposal.setIpsecEncapsulationMode(
+          toIpsecEncapdulationMode(ipsecTunnel.getIpsecMode(), warnings));
+    }
+    return proposals;
   }
   enum GatewayType {
     TRANSIT,
@@ -355,11 +374,11 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
   private final @Nonnull String _awsGatewayId;
 
   private static @Nonnull IpsecPhase2Policy toIpsecPhase2Policy(
-      IpsecTunnel ipsecTunnel, String ipsecPhase2Proposal) {
+      IpsecTunnel ipsecTunnel, List<String> ipsecPhase2Proposals) {
     IpsecPhase2Policy ipsecPhase2Policy = new IpsecPhase2Policy();
     ipsecPhase2Policy.setPfsKeyGroup(
-            toDiffieHellmanGroup(ipsecTunnel.getIpsecPerfectForwardSecrecy().get(0).getValue()));
-    ipsecPhase2Policy.setProposals(ImmutableList.of(ipsecPhase2Proposal));
+        toDiffieHellmanGroup(ipsecTunnel.getIpsecPerfectForwardSecrecy()));
+    ipsecPhase2Policy.setProposals(ipsecPhase2Proposals);
     return ipsecPhase2Policy;
   }
 
@@ -433,13 +452,13 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
 
   private static @Nonnull IkePhase1Policy toIkePhase1Policy(
       String vpnId,
-      String ikePhase1ProposalName,
+      List<String> ikePhase1ProposalName,
       IkePhase1Key ikePhase1Key,
       Ip remoteIdentity,
       String localInterface) {
     IkePhase1Policy ikePhase1Policy = new IkePhase1Policy(vpnId);
     ikePhase1Policy.setIkePhase1Key(ikePhase1Key);
-    ikePhase1Policy.setIkePhase1Proposals(ImmutableList.of(ikePhase1ProposalName));
+    ikePhase1Policy.setIkePhase1Proposals(ikePhase1ProposalName);
     ikePhase1Policy.setRemoteIdentity(remoteIdentity.toIpSpace());
     ikePhase1Policy.setLocalInterface(localInterface);
     return ikePhase1Policy;
@@ -481,6 +500,153 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
 
   }
 
+  /**
+   * Creates the infrastructure for this VPN connection on the gateway. This includes created
+   * underlay and IPSec tunnel interfaces, configuring IPSec, and running BGP on the tunnel
+   * interfaces.
+   *
+   * <p>The underlay and overlay VRFs and export/import policies must be instantiated before calling
+   * this function.
+   */
+  void applyToGateway(
+      Configuration gwCfg,
+      Vrf tunnelVrf,
+      @Nullable String exportPolicyName,
+      @Nullable String importPolicyName,
+      Warnings warnings) {
+    ImmutableSortedMap.Builder<String, IkePhase1Policy> ikePhase1PolicyMapBuilder =
+        ImmutableSortedMap.naturalOrder();
+    ImmutableSortedMap.Builder<String, IkePhase1Key> ikePhase1KeyMapBuilder =
+        ImmutableSortedMap.naturalOrder();
+    ImmutableSortedMap.Builder<String, IkePhase1Proposal> ikePhase1ProposalMapBuilder =
+        ImmutableSortedMap.naturalOrder();
+    ImmutableSortedMap.Builder<String, IpsecPhase2Proposal> ipsecPhase2ProposalMapBuilder =
+        ImmutableSortedMap.naturalOrder();
+    ImmutableSortedMap.Builder<String, IpsecPhase2Policy> ipsecPhase2PolicyMapBuilder =
+        ImmutableSortedMap.naturalOrder();
+    ImmutableSortedMap.Builder<String, IpsecPeerConfig> ipsecPeerConfigMapBuilder =
+        ImmutableSortedMap.naturalOrder();
+
+    if (gwCfg.getVrfs().get(VPN_UNDERLAY_VRF_NAME) == null) {
+      warnings.redFlagf("Underlay VRF does not exist on gateway %s", gwCfg.getHostname());
+      return;
+    }
+    if (gwCfg.getVrfs().get(tunnelVrf.getName()) == null) {
+      warnings.redFlagf("Tunnel VRF does not exist on gateway %s", gwCfg.getHostname());
+      return;
+    }
+
+    for (int i = 0; i < _ipsecTunnels.size(); i++) {
+      String tunnelId = vpnTunnelId(_vpnConnectionId, i + 1);
+      IpsecTunnel ipsecTunnel = _ipsecTunnels.get(i);
+
+      // create representation structures and add to configuration node
+      String externalInterfaceName = vpnExternalInterfaceName(tunnelId);
+      ConcreteInterfaceAddress externalInterfaceAddress =
+          ConcreteInterfaceAddress.create(
+              ipsecTunnel.getVgwOutsideAddress(), Prefix.MAX_PREFIX_LENGTH);
+      Utils.newInterface(
+          externalInterfaceName,
+          gwCfg,
+          VPN_UNDERLAY_VRF_NAME,
+          externalInterfaceAddress,
+          "IPSec tunnel " + tunnelId);
+
+      String vpnIfaceName = vpnInterfaceName(tunnelId);
+      ConcreteInterfaceAddress vpnInterfaceAddress =
+          ConcreteInterfaceAddress.create(
+              ipsecTunnel.getVgwInsideAddress(), ipsecTunnel.getVgwInsidePrefixLength());
+      Utils.newInterface(
+          vpnIfaceName, gwCfg, tunnelVrf.getName(), vpnInterfaceAddress, "VPN " + tunnelId);
+
+      // configure Ipsec
+      List<IkePhase1Proposal> ikeProposals = toIkePhase1Proposals(tunnelId, ipsecTunnel);
+      List<String> ikeProposalNames =
+          ikeProposals.stream().map(IkePhase1Proposal::getName).toList();
+      for (IkePhase1Proposal proposal : ikeProposals) {
+        ikePhase1ProposalMapBuilder.put(proposal.getName(), proposal);
+      }
+
+      IkePhase1Key ikePhase1Key =
+          toIkePhase1PreSharedKey(
+              ipsecTunnel, ipsecTunnel.getCgwOutsideAddress(), externalInterfaceName);
+      ikePhase1KeyMapBuilder.put(tunnelId, ikePhase1Key);
+      ikePhase1PolicyMapBuilder.put(
+          tunnelId,
+          toIkePhase1Policy(
+              tunnelId,
+              ikeProposalNames,
+              ikePhase1Key,
+              ipsecTunnel.getCgwOutsideAddress(),
+              externalInterfaceName));
+      List<IpsecPhase2Proposal> ipsecProposals = toIpsecPhase2Proposal(ipsecTunnel, warnings);
+      List<String> ipsecProposalNames = List.of();
+
+      for (int count = 0; i < ipsecProposals.size(); count++) {
+        String name = "ipsec " + tunnelId + count;
+        ipsecPhase2ProposalMapBuilder.put(name, ipsecProposals.get(i));
+      }
+      ipsecPhase2PolicyMapBuilder.put(
+          tunnelId, toIpsecPhase2Policy(ipsecTunnel, ipsecProposalNames));
+      ipsecPeerConfigMapBuilder.put(
+          tunnelId,
+          IpsecStaticPeerConfig.builder()
+              .setTunnelInterface(vpnIfaceName)
+              .setIkePhase1Policy(tunnelId)
+              .setIpsecPolicy(tunnelId)
+              .setSourceInterface(externalInterfaceName)
+              .setLocalAddress(ipsecTunnel.getVgwOutsideAddress())
+              .setDestinationAddress(ipsecTunnel.getCgwOutsideAddress())
+              .build());
+
+      // configure BGP peering
+      if (_isBgpConnection) {
+        BgpActivePeerConfig.builder()
+            .setPeerAddress(ipsecTunnel.getCgwInsideAddress())
+            .setRemoteAsns(
+                Optional.ofNullable(ipsecTunnel.getCgwBgpAsn())
+                    .map(LongSpace::of)
+                    .orElse(LongSpace.EMPTY))
+            .setBgpProcess(tunnelVrf.getBgpProcess())
+            .setLocalAs(ipsecTunnel.getVgwBgpAsn())
+            .setLocalIp(ipsecTunnel.getVgwInsideAddress())
+            .setIpv4UnicastAddressFamily(
+                Ipv4UnicastAddressFamily.builder()
+                    .setExportPolicy(exportPolicyName)
+                    .setImportPolicy(importPolicyName)
+                    .build())
+            .build();
+      }
+
+      // configure static routes -- this list of routes should be empty in case of transit gateway
+      _routes.forEach(
+          pfx -> addStaticRoute(gwCfg, toStaticRoute(pfx, ipsecTunnel.getCgwInsideAddress())));
+    }
+
+    gwCfg.setIkePhase1Proposals(ikePhase1ProposalMapBuilder.build());
+    gwCfg.setIkePhase1Keys(ikePhase1KeyMapBuilder.build());
+    gwCfg.setIkePhase1Policies(ikePhase1PolicyMapBuilder.build());
+    gwCfg.setIpsecPhase2Proposals(ipsecPhase2ProposalMapBuilder.build());
+    gwCfg.setIpsecPhase2Policies(ipsecPhase2PolicyMapBuilder.build());
+    gwCfg.setIpsecPeerConfigs(ipsecPeerConfigMapBuilder.build());
+  }
+
+  /**
+   * Sets up what is what needed to establish VPN connections to remote nodes: the underlay VRF,
+   * routing export policy to backbone, and the connection to backbone.
+   */
+  static void initVpnConnectionsInfrastructure(Configuration gwCfg) {
+    Vrf underlayVrf = Vrf.builder().setOwner(gwCfg).setName(VPN_UNDERLAY_VRF_NAME).build();
+
+    RoutingPolicy.builder()
+        .setName(VPN_TO_BACKBONE_EXPORT_POLICY_NAME)
+        .setOwner(gwCfg)
+        .setStatements(Collections.singletonList(EXPORT_CONNECTED_STATEMENT))
+        .build();
+
+    createBackboneConnection(gwCfg, underlayVrf, VPN_TO_BACKBONE_EXPORT_POLICY_NAME);
+  }
+
   @JsonIgnoreProperties(ignoreUnknown = true)
   @ParametersAreNonnullByDefault
   public static class TunnelOptions implements Serializable {
@@ -496,8 +662,7 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
     private final List<Value> _phase2EncryptionAlgorithm;
     @Nullable
     private final List<Value> _phase2IntegrityAlgorithms;
-    @Nullable
-    private final List<Value> _phase2DHGroupNumbers;
+    @Nullable private final Value _phase2DHGroupNumbers;
     @Nullable
     private final Ip _outsideIpAddress;
     @Nullable
@@ -648,7 +813,7 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
     }
 
     @Nullable
-    List<Value> getPhase2DHGroupNumbers() {
+    Value getPhase2DHGroupNumbers() {
       return _phase2DHGroupNumbers;
     }
 
@@ -686,140 +851,6 @@ final class VpnConnection implements AwsVpcEntity, Serializable {
     }
 
     ;
-  }
-
-  /**
-   * Sets up what is what needed to establish VPN connections to remote nodes: the underlay VRF,
-   * routing export policy to backbone, and the connection to backbone.
-   */
-  static void initVpnConnectionsInfrastructure(Configuration gwCfg) {
-    Vrf underlayVrf = Vrf.builder().setOwner(gwCfg).setName(VPN_UNDERLAY_VRF_NAME).build();
-
-    RoutingPolicy.builder()
-        .setName(VPN_TO_BACKBONE_EXPORT_POLICY_NAME)
-        .setOwner(gwCfg)
-        .setStatements(Collections.singletonList(EXPORT_CONNECTED_STATEMENT))
-        .build();
-
-    createBackboneConnection(gwCfg, underlayVrf, VPN_TO_BACKBONE_EXPORT_POLICY_NAME);
-  }
-
-  /**
-   * Creates the infrastructure for this VPN connection on the gateway. This includes created
-   * underlay and IPSec tunnel interfaces, configuring IPSec, and running BGP on the tunnel
-   * interfaces.
-   *
-   * <p>The underlay and overlay VRFs and export/import policies must be instantiated before calling
-   * this function.
-   */
-  void applyToGateway(
-      Configuration gwCfg,
-      Vrf tunnelVrf,
-      @Nullable String exportPolicyName,
-      @Nullable String importPolicyName,
-      Warnings warnings) {
-    ImmutableSortedMap.Builder<String, IkePhase1Policy> ikePhase1PolicyMapBuilder =
-        ImmutableSortedMap.naturalOrder();
-    ImmutableSortedMap.Builder<String, IkePhase1Key> ikePhase1KeyMapBuilder =
-        ImmutableSortedMap.naturalOrder();
-    ImmutableSortedMap.Builder<String, IkePhase1Proposal> ikePhase1ProposalMapBuilder =
-        ImmutableSortedMap.naturalOrder();
-    ImmutableSortedMap.Builder<String, IpsecPhase2Proposal> ipsecPhase2ProposalMapBuilder =
-        ImmutableSortedMap.naturalOrder();
-    ImmutableSortedMap.Builder<String, IpsecPhase2Policy> ipsecPhase2PolicyMapBuilder =
-        ImmutableSortedMap.naturalOrder();
-    ImmutableSortedMap.Builder<String, IpsecPeerConfig> ipsecPeerConfigMapBuilder =
-        ImmutableSortedMap.naturalOrder();
-
-    if (gwCfg.getVrfs().get(VPN_UNDERLAY_VRF_NAME) == null) {
-      warnings.redFlagf("Underlay VRF does not exist on gateway %s", gwCfg.getHostname());
-      return;
-    }
-    if (gwCfg.getVrfs().get(tunnelVrf.getName()) == null) {
-      warnings.redFlagf("Tunnel VRF does not exist on gateway %s", gwCfg.getHostname());
-      return;
-    }
-
-    for (int i = 0; i < _ipsecTunnels.size(); i++) {
-      String tunnelId = vpnTunnelId(_vpnConnectionId, i + 1);
-      IpsecTunnel ipsecTunnel = _ipsecTunnels.get(i);
-
-      // create representation structures and add to configuration node
-      String externalInterfaceName = vpnExternalInterfaceName(tunnelId);
-      ConcreteInterfaceAddress externalInterfaceAddress =
-          ConcreteInterfaceAddress.create(
-              ipsecTunnel.getVgwOutsideAddress(), Prefix.MAX_PREFIX_LENGTH);
-      Utils.newInterface(
-          externalInterfaceName,
-          gwCfg,
-          VPN_UNDERLAY_VRF_NAME,
-          externalInterfaceAddress,
-          "IPSec tunnel " + tunnelId);
-
-      String vpnIfaceName = vpnInterfaceName(tunnelId);
-      ConcreteInterfaceAddress vpnInterfaceAddress =
-          ConcreteInterfaceAddress.create(
-              ipsecTunnel.getVgwInsideAddress(), ipsecTunnel.getVgwInsidePrefixLength());
-      Utils.newInterface(
-          vpnIfaceName, gwCfg, tunnelVrf.getName(), vpnInterfaceAddress, "VPN " + tunnelId);
-
-      // configure Ipsec
-      ikePhase1ProposalMapBuilder.put(tunnelId, toIkePhase1Proposal(tunnelId, ipsecTunnel));
-      IkePhase1Key ikePhase1Key =
-          toIkePhase1PreSharedKey(
-              ipsecTunnel, ipsecTunnel.getCgwOutsideAddress(), externalInterfaceName);
-      ikePhase1KeyMapBuilder.put(tunnelId, ikePhase1Key);
-      ikePhase1PolicyMapBuilder.put(
-          tunnelId,
-          toIkePhase1Policy(
-              tunnelId,
-              tunnelId,
-              ikePhase1Key,
-              ipsecTunnel.getCgwOutsideAddress(),
-              externalInterfaceName));
-      ipsecPhase2ProposalMapBuilder.put(tunnelId, toIpsecPhase2Proposal(ipsecTunnel, warnings));
-      ipsecPhase2PolicyMapBuilder.put(tunnelId, toIpsecPhase2Policy(ipsecTunnel, tunnelId));
-      ipsecPeerConfigMapBuilder.put(
-          tunnelId,
-          IpsecStaticPeerConfig.builder()
-              .setTunnelInterface(vpnIfaceName)
-              .setIkePhase1Policy(tunnelId)
-              .setIpsecPolicy(tunnelId)
-              .setSourceInterface(externalInterfaceName)
-              .setLocalAddress(ipsecTunnel.getVgwOutsideAddress())
-              .setDestinationAddress(ipsecTunnel.getCgwOutsideAddress())
-              .build());
-
-      // configure BGP peering
-      if (_isBgpConnection) {
-        BgpActivePeerConfig.builder()
-            .setPeerAddress(ipsecTunnel.getCgwInsideAddress())
-            .setRemoteAsns(
-                Optional.ofNullable(ipsecTunnel.getCgwBgpAsn())
-                    .map(LongSpace::of)
-                    .orElse(LongSpace.EMPTY))
-            .setBgpProcess(tunnelVrf.getBgpProcess())
-            .setLocalAs(ipsecTunnel.getVgwBgpAsn())
-            .setLocalIp(ipsecTunnel.getVgwInsideAddress())
-            .setIpv4UnicastAddressFamily(
-                Ipv4UnicastAddressFamily.builder()
-                    .setExportPolicy(exportPolicyName)
-                    .setImportPolicy(importPolicyName)
-                    .build())
-            .build();
-      }
-
-      // configure static routes -- this list of routes should be empty in case of transit gateway
-      _routes.forEach(
-          pfx -> addStaticRoute(gwCfg, toStaticRoute(pfx, ipsecTunnel.getCgwInsideAddress())));
-    }
-
-    gwCfg.setIkePhase1Proposals(ikePhase1ProposalMapBuilder.build());
-    gwCfg.setIkePhase1Keys(ikePhase1KeyMapBuilder.build());
-    gwCfg.setIkePhase1Policies(ikePhase1PolicyMapBuilder.build());
-    gwCfg.setIpsecPhase2Proposals(ipsecPhase2ProposalMapBuilder.build());
-    gwCfg.setIpsecPhase2Policies(ipsecPhase2PolicyMapBuilder.build());
-    gwCfg.setIpsecPeerConfigs(ipsecPeerConfigMapBuilder.build());
   }
 
   @Nonnull

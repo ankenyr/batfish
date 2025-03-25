@@ -80940,16 +80940,24 @@
             "name" : "200",
             "authenticationMethod" : "PRE_SHARED_KEYS",
             "diffieHellmanGroup" : "GROUP2",
-            "encryptionAlgorithm" : "AES_128_CBC",
-            "hashingAlgorithm" : "SHA1",
+            "encryptionAlgorithm" : [
+              "AES_128_CBC"
+            ],
+            "hashingAlgorithm" : [
+              "SHA1"
+            ],
             "lifetimeSeconds" : 28800
           },
           "201" : {
             "name" : "201",
             "authenticationMethod" : "PRE_SHARED_KEYS",
             "diffieHellmanGroup" : "GROUP2",
-            "encryptionAlgorithm" : "AES_128_CBC",
-            "hashingAlgorithm" : "SHA1",
+            "encryptionAlgorithm" : [
+              "AES_128_CBC"
+            ],
+            "hashingAlgorithm" : [
+              "SHA1"
+            ],
             "lifetimeSeconds" : 28800
           }
         },

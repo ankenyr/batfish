@@ -1,5 +1,6 @@
 package org.batfish.datamodel.matchers;
 
+import java.util.List;
 import java.util.SortedSet;
 import javax.annotation.Nonnull;
 import org.batfish.datamodel.EncryptionAlgorithm;
@@ -13,8 +14,9 @@ import org.hamcrest.Matcher;
 final class IpsecPhase2ProposalMatchersImpl {
 
   static final class HasAuthenticationAlgorithm
-      extends FeatureMatcher<IpsecPhase2Proposal, IpsecAuthenticationAlgorithm> {
-    HasAuthenticationAlgorithm(@Nonnull Matcher<? super IpsecAuthenticationAlgorithm> subMatcher) {
+      extends FeatureMatcher<IpsecPhase2Proposal, List<IpsecAuthenticationAlgorithm>> {
+    HasAuthenticationAlgorithm(
+        @Nonnull Matcher<? super List<IpsecAuthenticationAlgorithm>> subMatcher) {
       super(
           subMatcher,
           "An IPSec Phase2 Proposal with AuthenticationAlgorithm:",
@@ -22,20 +24,20 @@ final class IpsecPhase2ProposalMatchersImpl {
     }
 
     @Override
-    protected IpsecAuthenticationAlgorithm featureValueOf(IpsecPhase2Proposal actual) {
-      return actual.getAuthenticationAlgorithm();
+    protected List<IpsecAuthenticationAlgorithm> featureValueOf(IpsecPhase2Proposal actual) {
+      return actual.getAuthenticationAlgorithms();
     }
   }
 
   static final class HasEncryptionAlgorithm
-      extends FeatureMatcher<IpsecPhase2Proposal, EncryptionAlgorithm> {
-    HasEncryptionAlgorithm(@Nonnull Matcher<? super EncryptionAlgorithm> subMatcher) {
+      extends FeatureMatcher<IpsecPhase2Proposal, List<EncryptionAlgorithm>> {
+    HasEncryptionAlgorithm(@Nonnull Matcher<? super List<EncryptionAlgorithm>> subMatcher) {
       super(
           subMatcher, "An IPSec Phase2 Proposal with EncryptionAlgorithm:", "EncryptionAlgorithm");
     }
 
     @Override
-    protected EncryptionAlgorithm featureValueOf(IpsecPhase2Proposal actual) {
+    protected List<EncryptionAlgorithm> featureValueOf(IpsecPhase2Proposal actual) {
       return actual.getEncryptionAlgorithm();
     }
   }

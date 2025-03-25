@@ -4551,10 +4551,11 @@ public final class CiscoGrammarTest {
         hasIkePhase1Proposal(
             "10",
             allOf(
-                IkePhase1ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_CBC),
+                IkePhase1ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_CBC)),
                 IkePhase1ProposalMatchers.hasAuthenticationMethod(
                     IkeAuthenticationMethod.RSA_SIGNATURES),
-                IkePhase1ProposalMatchers.hasHashingAlgorithm(IkeHashingAlgorithm.MD5),
+                IkePhase1ProposalMatchers.hasHashingAlgorithm(List.of(IkeHashingAlgorithm.MD5)),
                 IkePhase1ProposalMatchers.hasDiffieHellmanGroup(DiffieHellmanGroup.GROUP1),
                 IkePhase1ProposalMatchers.hasLifeTimeSeconds(14400))));
 
@@ -4563,10 +4564,11 @@ public final class CiscoGrammarTest {
         hasIkePhase1Proposal(
             "20",
             allOf(
-                IkePhase1ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.THREEDES_CBC),
+                IkePhase1ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.THREEDES_CBC)),
                 IkePhase1ProposalMatchers.hasAuthenticationMethod(
                     IkeAuthenticationMethod.PRE_SHARED_KEYS),
-                IkePhase1ProposalMatchers.hasHashingAlgorithm(IkeHashingAlgorithm.SHA1),
+                IkePhase1ProposalMatchers.hasHashingAlgorithm(List.of(IkeHashingAlgorithm.SHA1)),
                 IkePhase1ProposalMatchers.hasDiffieHellmanGroup(DiffieHellmanGroup.GROUP2),
                 IkePhase1ProposalMatchers.hasLifeTimeSeconds(86400))));
     assertThat(
@@ -4731,8 +4733,9 @@ public final class CiscoGrammarTest {
             "ts1",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_MD5_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_256_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_MD5_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_256_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -4742,9 +4745,9 @@ public final class CiscoGrammarTest {
             "ts2",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
                 IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
-                    EncryptionAlgorithm.THREEDES_CBC),
+                    List.of(EncryptionAlgorithm.THREEDES_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(
                     ImmutableSortedSet.of(IpsecProtocol.ESP, IpsecProtocol.AH)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
@@ -4755,8 +4758,9 @@ public final class CiscoGrammarTest {
             "ts3",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_MD5_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_192_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_MD5_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_192_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(
                     ImmutableSortedSet.of(IpsecProtocol.ESP, IpsecProtocol.AH)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
@@ -4767,8 +4771,9 @@ public final class CiscoGrammarTest {
             "ts4",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_MD5_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_GCM),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_MD5_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_GCM)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -4779,8 +4784,9 @@ public final class CiscoGrammarTest {
             "ts5",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_MD5_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_256_GCM),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_MD5_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_256_GCM)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -4791,9 +4797,9 @@ public final class CiscoGrammarTest {
             "ts6",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_MD5_96),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_MD5_96)),
                 IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
-                    EncryptionAlgorithm.AES_128_GMAC),
+                    List.of(EncryptionAlgorithm.AES_128_GMAC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));

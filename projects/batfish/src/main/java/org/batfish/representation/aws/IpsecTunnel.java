@@ -43,7 +43,7 @@ final class IpsecTunnel implements Serializable {
 
   private final @Nonnull String _ipsecMode;
 
-  private final @Nonnull List<VpnConnection.Value> _ipsecPerfectForwardSecrecy;
+  private final @Nonnull VpnConnection.Value _ipsecPerfectForwardSecrecy;
 
   private final @Nonnull String _ipsecProtocol;
 
@@ -70,7 +70,7 @@ final class IpsecTunnel implements Serializable {
       List<VpnConnection.Value> ipsecEncryptionProtocol,
       int ipsecLifetime,
       String ipsecMode,
-      List<VpnConnection.Value> ipsecPerfectForwardSecrecy,
+      VpnConnection.Value ipsecPerfectForwardSecrecy,
       String ipsecProtocol,
       @Nullable Long vgwBgpAsn,
       Ip vgwInsideAddress,
@@ -211,7 +211,7 @@ final class IpsecTunnel implements Serializable {
   }
 
   @Nonnull
-  List<VpnConnection.Value> getIpsecPerfectForwardSecrecy() {
+  VpnConnection.Value getIpsecPerfectForwardSecrecy() {
     return _ipsecPerfectForwardSecrecy;
   }
 
@@ -336,7 +336,7 @@ final class IpsecTunnel implements Serializable {
     private List<VpnConnection.Value> _ipsecEncryptionProtocol;
     private int _ipsecLifetime;
     private String _ipsecMode;
-    private List<VpnConnection.Value> _ipsecPerfectForwardSecrecy;
+    private VpnConnection.Value _ipsecPerfectForwardSecrecy;
     private String _ipsecProtocol;
     private Long _vgwBgpAsn;
     private Ip _vgwInsideAddress;
@@ -415,7 +415,7 @@ final class IpsecTunnel implements Serializable {
       return this;
     }
 
-    Builder setIpsecPerfectForwardSecrecy(List<VpnConnection.Value> ipsecPerfectForwardSecrecy) {
+    Builder setIpsecPerfectForwardSecrecy(VpnConnection.Value ipsecPerfectForwardSecrecy) {
       _ipsecPerfectForwardSecrecy = ipsecPerfectForwardSecrecy;
       return this;
     }

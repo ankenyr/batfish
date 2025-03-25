@@ -13,6 +13,8 @@ import org.batfish.datamodel.matchers.IkePhase1ProposalMatchersImpl.HasHashingAl
 import org.batfish.datamodel.matchers.IkePhase1ProposalMatchersImpl.HasLifeTimeSeconds;
 import org.batfish.datamodel.matchers.IkePhase1ProposalMatchersImpl.HasName;
 
+import java.util.List;
+
 public final class IkePhase1ProposalMatchers {
 
   /**
@@ -20,7 +22,7 @@ public final class IkePhase1ProposalMatchers {
    * encryptionAlgorithm} matches specified {@code encryptionAlgorithm}
    */
   public static HasEncryptionAlgorithm hasEncryptionAlgorithm(
-      EncryptionAlgorithm encryptionAlgorithm) {
+      List<EncryptionAlgorithm> encryptionAlgorithm) {
     return new HasEncryptionAlgorithm(equalTo(encryptionAlgorithm));
   }
 
@@ -28,7 +30,8 @@ public final class IkePhase1ProposalMatchers {
    * Provides a matcher that matches if the IKE Phase 1 Proposal's value of {@code hashingAlgorithm}
    * matches specified {@code authenticationAlgorithm}
    */
-  public static HasHashingAlgorithm hasHashingAlgorithm(IkeHashingAlgorithm hashingAlgorithm) {
+  public static HasHashingAlgorithm hasHashingAlgorithm(
+      List<IkeHashingAlgorithm> hashingAlgorithm) {
     return new HasHashingAlgorithm(equalTo(hashingAlgorithm));
   }
 

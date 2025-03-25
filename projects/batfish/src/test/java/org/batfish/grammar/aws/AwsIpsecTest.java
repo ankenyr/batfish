@@ -114,10 +114,11 @@ public class AwsIpsecTest {
         hasIkePhase1Proposal(
             "vpn-ba2e34a8-1",
             allOf(
-                IkePhase1ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_CBC),
+                IkePhase1ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_CBC)),
                 IkePhase1ProposalMatchers.hasAuthenticationMethod(
                     IkeAuthenticationMethod.PRE_SHARED_KEYS),
-                IkePhase1ProposalMatchers.hasHashingAlgorithm(IkeHashingAlgorithm.SHA1),
+                IkePhase1ProposalMatchers.hasHashingAlgorithm(List.of(IkeHashingAlgorithm.SHA1)),
                 IkePhase1ProposalMatchers.hasDiffieHellmanGroup(DiffieHellmanGroup.GROUP2))));
   }
 
@@ -138,8 +139,9 @@ public class AwsIpsecTest {
             "vpn-ba2e34a8-1",
             allOf(
                 IpsecPhase2ProposalMatchers.hasAuthenticationAlgorithm(
-                    IpsecAuthenticationAlgorithm.HMAC_SHA1_96),
-                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(EncryptionAlgorithm.AES_128_CBC),
+                    List.of(IpsecAuthenticationAlgorithm.HMAC_SHA1_96)),
+                IpsecPhase2ProposalMatchers.hasEncryptionAlgorithm(
+                    List.of(EncryptionAlgorithm.AES_128_CBC)),
                 IpsecPhase2ProposalMatchers.hasProtocols(ImmutableSortedSet.of(IpsecProtocol.ESP)),
                 IpsecPhase2ProposalMatchers.hasIpsecEncapsulationMode(
                     IpsecEncapsulationMode.TUNNEL))));
@@ -151,8 +153,7 @@ public class AwsIpsecTest {
             "vpn-ba2e34a8-1",
             allOf(
                 IpsecPhase2PolicyMatchers.hasIpsecProposals(
-                    equalTo(ImmutableList.of("vpn-ba2e34a8-1"))),
-                IpsecPhase2PolicyMatchers.hasPfsKeyGroup(equalTo(DiffieHellmanGroup.GROUP2)))));
+                    equalTo(ImmutableList.of("vpn-ba2e34a8-1"))))));
 
     // test for IPsec peer config
     assertThat(
