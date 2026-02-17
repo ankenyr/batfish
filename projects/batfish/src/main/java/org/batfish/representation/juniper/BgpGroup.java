@@ -36,6 +36,7 @@ public class BgpGroup implements Serializable {
   private Boolean _ebgpMultihop;
   private Boolean _enforceFirstAs;
   private final List<String> _exportPolicies;
+  private Boolean _evpnAf;
   protected String _groupName;
   private final List<String> _importPolicies;
   protected transient boolean _inherited;
@@ -99,6 +100,9 @@ public class BgpGroup implements Serializable {
       // Deliberately do not inherit drop-path-attributes (protocol-level only)
       if (_enforceFirstAs == null) {
         _enforceFirstAs = _parent._enforceFirstAs;
+      }
+      if (_evpnAf == null) {
+        _evpnAf = _parent._evpnAf;
       }
       if (_ebgpMultihop == null) {
         _ebgpMultihop = _parent._ebgpMultihop;
@@ -213,6 +217,10 @@ public class BgpGroup implements Serializable {
 
   public Boolean getEnforceFirstAs() {
     return _enforceFirstAs;
+  }
+
+  public Boolean getEvpnAf() {
+    return _evpnAf;
   }
 
   public final List<String> getExportPolicies() {
@@ -349,6 +357,10 @@ public class BgpGroup implements Serializable {
 
   public void setEnforceFirstAs(Boolean enforceFirstAs) {
     _enforceFirstAs = enforceFirstAs;
+  }
+
+  public void setEvpnAf(Boolean evpnAf) {
+    _evpnAf = evpnAf;
   }
 
   public void setIpv6(boolean ipv6) {

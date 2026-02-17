@@ -40377,6 +40377,21 @@
                   "defaultMetric" : 0,
                   "ebgpMultihop" : false,
                   "enforceFirstAs" : true,
+                  "evpnAddressFamily" : {
+                    "addressFamilyCapabilities" : {
+                      "additionalPathsReceive" : false,
+                      "additionalPathsSelectAll" : false,
+                      "additionalPathsSend" : false,
+                      "advertiseExternal" : false,
+                      "advertiseInactive" : false,
+                      "allowLocalAsIn" : false,
+                      "allowRemoteAsOut" : "NEVER",
+                      "sendCommunity" : false,
+                      "sendExtendedCommunity" : false
+                    },
+                    "propagateUnmatched" : true,
+                    "routeReflectorClient" : false
+                  },
                   "group" : "MYGROUP",
                   "ipv4UnicastAddressFamily" : {
                     "addressFamilyCapabilities" : {
@@ -110009,6 +110024,21 @@
                   "defaultMetric" : 0,
                   "ebgpMultihop" : false,
                   "enforceFirstAs" : false,
+                  "evpnAddressFamily" : {
+                    "addressFamilyCapabilities" : {
+                      "additionalPathsReceive" : false,
+                      "additionalPathsSelectAll" : false,
+                      "additionalPathsSend" : false,
+                      "advertiseExternal" : false,
+                      "advertiseInactive" : false,
+                      "allowLocalAsIn" : false,
+                      "allowRemoteAsOut" : "NEVER",
+                      "sendCommunity" : false,
+                      "sendExtendedCommunity" : false
+                    },
+                    "propagateUnmatched" : true,
+                    "routeReflectorClient" : false
+                  },
                   "group" : "someipv4bgpgroup",
                   "ipv4UnicastAddressFamily" : {
                     "addressFamilyCapabilities" : {
@@ -130458,6 +130488,21 @@
                   "defaultMetric" : 0,
                   "ebgpMultihop" : false,
                   "enforceFirstAs" : false,
+                  "evpnAddressFamily" : {
+                    "addressFamilyCapabilities" : {
+                      "additionalPathsReceive" : false,
+                      "additionalPathsSelectAll" : false,
+                      "additionalPathsSend" : false,
+                      "advertiseExternal" : false,
+                      "advertiseInactive" : false,
+                      "allowLocalAsIn" : false,
+                      "allowRemoteAsOut" : "NEVER",
+                      "sendCommunity" : false,
+                      "sendExtendedCommunity" : false
+                    },
+                    "propagateUnmatched" : true,
+                    "routeReflectorClient" : false
+                  },
                   "group" : "overlay",
                   "ipv4UnicastAddressFamily" : {
                     "addressFamilyCapabilities" : {
@@ -130491,6 +130536,21 @@
                   "defaultMetric" : 0,
                   "ebgpMultihop" : false,
                   "enforceFirstAs" : false,
+                  "evpnAddressFamily" : {
+                    "addressFamilyCapabilities" : {
+                      "additionalPathsReceive" : false,
+                      "additionalPathsSelectAll" : false,
+                      "additionalPathsSend" : false,
+                      "advertiseExternal" : false,
+                      "advertiseInactive" : false,
+                      "allowLocalAsIn" : false,
+                      "allowRemoteAsOut" : "NEVER",
+                      "sendCommunity" : false,
+                      "sendExtendedCommunity" : false
+                    },
+                    "propagateUnmatched" : true,
+                    "routeReflectorClient" : false
+                  },
                   "group" : "overlay",
                   "ipv4UnicastAddressFamily" : {
                     "addressFamilyCapabilities" : {
@@ -130524,6 +130584,21 @@
                   "defaultMetric" : 0,
                   "ebgpMultihop" : false,
                   "enforceFirstAs" : false,
+                  "evpnAddressFamily" : {
+                    "addressFamilyCapabilities" : {
+                      "additionalPathsReceive" : false,
+                      "additionalPathsSelectAll" : false,
+                      "additionalPathsSend" : false,
+                      "advertiseExternal" : false,
+                      "advertiseInactive" : false,
+                      "allowLocalAsIn" : false,
+                      "allowRemoteAsOut" : "NEVER",
+                      "sendCommunity" : false,
+                      "sendExtendedCommunity" : false
+                    },
+                    "propagateUnmatched" : true,
+                    "routeReflectorClient" : false
+                  },
                   "group" : "overlay",
                   "ipv4UnicastAddressFamily" : {
                     "addressFamilyCapabilities" : {
@@ -130557,6 +130632,21 @@
                   "defaultMetric" : 0,
                   "ebgpMultihop" : false,
                   "enforceFirstAs" : false,
+                  "evpnAddressFamily" : {
+                    "addressFamilyCapabilities" : {
+                      "additionalPathsReceive" : false,
+                      "additionalPathsSelectAll" : false,
+                      "additionalPathsSend" : false,
+                      "advertiseExternal" : false,
+                      "advertiseInactive" : false,
+                      "allowLocalAsIn" : false,
+                      "allowRemoteAsOut" : "NEVER",
+                      "sendCommunity" : false,
+                      "sendExtendedCommunity" : false
+                    },
+                    "propagateUnmatched" : true,
+                    "routeReflectorClient" : false
+                  },
                   "group" : "overlay",
                   "ipv4UnicastAddressFamily" : {
                     "addressFamilyCapabilities" : {
