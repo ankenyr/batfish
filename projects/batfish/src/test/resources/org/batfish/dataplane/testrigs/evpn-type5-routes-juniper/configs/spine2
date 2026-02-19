@@ -1,0 +1,21 @@
+system { host-name spine2; }
+routing-options {
+    router-id 1.1.1.2;
+    autonomous-system 65000;
+}
+protocols {
+    bgp {
+        group evpn-overlay {
+            type internal;
+            local-address 1.1.1.2;
+            cluster 1.1.1.2;
+            family evpn { signaling; }
+            neighbor 1.1.1.3; # leaf1
+            neighbor 1.1.1.4; # leaf2
+            neighbor 1.1.1.5; # leaf3
+            neighbor 1.1.1.6; # leaf4
+            neighbor 2.2.2.2; # exitgateway
+        }
+    }
+}
+interfaces { lo0 { unit 0 { family inet { address 1.1.1.2/32; } } } }

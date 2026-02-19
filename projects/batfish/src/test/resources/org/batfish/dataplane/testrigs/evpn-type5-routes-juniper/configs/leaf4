@@ -1,0 +1,44 @@
+system { host-name leaf4; }
+routing-options {
+    router-id 1.1.1.6;
+    autonomous-system 65000;
+}
+routing-instances {
+    vrf1 {
+        instance-type vrf;
+        interface irb.40;
+        route-distinguisher 1.1.1.6:4001;
+        vrf-target target:65000:4001;
+        protocols {
+            evpn {
+                ip-prefix-routes {
+                    advertise direct-nexthop;
+                    encapsulation vxlan;
+                    vni 1004001;
+                }
+            }
+        }
+    }
+}
+switch-options {
+    vtep-source-interface lo0.0;
+    route-distinguisher 1.1.1.6:9999;
+    vrf-target target:65000:9999;
+}
+protocols {
+    bgp {
+        group evpn-overlay {
+            type internal;
+            family evpn { signaling; }
+            neighbor 1.1.1.1; # spine1
+            neighbor 1.1.1.2; # spine2
+        }
+    }
+}
+interfaces {
+    irb { unit 40 { family inet { address 192.168.40.101/24; } } }
+    lo0 { unit 0 { family inet { address 1.1.1.6/32; address 1.1.1.100/32; } } }
+    et-0/0/1 { unit 0 { family inet; } }
+    et-0/0/2 { unit 0 { family inet; } }
+}
+vlans { V40 { vlan-id 40; l3-interface irb.40; vxlan { vni 10040; } } }

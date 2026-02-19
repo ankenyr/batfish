@@ -1,0 +1,13 @@
+[
+  { "p1": { "node": "leaf1", "interface": "et-0/0/1" }, "p2": { "node": "spine1", "interface": "et-0/0/1" } },
+  { "p1": { "node": "leaf1", "interface": "et-0/0/2" }, "p2": { "node": "spine2", "interface": "et-0/0/1" } },
+  { "p1": { "node": "leaf2", "interface": "et-0/0/1" }, "p2": { "node": "spine1", "interface": "et-0/0/2" } },
+  { "p1": { "node": "leaf2", "interface": "et-0/0/2" }, "p2": { "node": "spine2", "interface": "et-0/0/2" } },
+  { "p1": { "node": "leaf3", "interface": "et-0/0/1" }, "p2": { "node": "spine1", "interface": "et-0/0/3" } },
+  { "p1": { "node": "leaf3", "interface": "et-0/0/2" }, "p2": { "node": "spine2", "interface": "et-0/0/3" } },
+  { "p1": { "node": "leaf4", "interface": "et-0/0/1" }, "p2": { "node": "spine1", "interface": "et-0/0/4" } },
+  { "p1": { "node": "leaf4", "interface": "et-0/0/2" }, "p2": { "node": "spine2", "interface": "et-0/0/4" } },
+  { "p1": { "node": "exitgateway", "interface": "et-0/0/30" }, "p2": { "node": "spine1", "interface": "et-0/0/30" } },
+  { "p1": { "node": "exitgateway", "interface": "et-0/0/31" }, "p2": { "node": "spine2", "interface": "et-0/0/31" } },
+  { "p1": { "node": "exitgateway", "interface": "et-0/0/1" }, "p2": { "node": "internet", "interface": "et-0/0/1" } }
+]

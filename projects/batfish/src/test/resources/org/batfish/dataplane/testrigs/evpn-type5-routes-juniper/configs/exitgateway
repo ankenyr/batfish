@@ -1,0 +1,34 @@
+system { host-name exitgateway; }
+routing-options { router-id 2.2.2.2; autonomous-system 65000; }
+routing-instances {
+    vrf1 {
+        instance-type vrf;
+        interface et-0/0/1.0; # WAN Port
+        route-distinguisher 2.2.2.2:4001;
+        vrf-target target:65000:4001;
+        protocols {
+            evpn { ip-prefix-routes { advertise direct-nexthop; encapsulation vxlan; vni 1004001; } }
+            bgp {
+                group external-edge {
+                    type external;
+                    neighbor 10.10.102.1 { peer-as 65001; }
+                }
+            }
+        }
+    }
+}
+switch-options { vtep-source-interface lo0.0; route-distinguisher 2.2.2.2:9999; vrf-target target:65000:9999; }
+protocols {
+    bgp {
+        group evpn-overlay {
+            type internal;
+            family evpn { signaling; }
+            neighbor 1.1.1.1; # spine1
+            neighbor 1.1.1.2; # spine2
+        }
+    }
+}
+interfaces {
+    et-0/0/1 { unit 0 { family inet { address 10.10.102.2/24; } } }
+    lo0 { unit 0 { family inet { address 2.2.2.2/32; } } }
+}

@@ -1,0 +1,17 @@
+system { host-name internet; }
+routing-options {
+    router-id 100.100.100.101;
+    autonomous-system 65001;
+    static { route 8.8.8.8/32 discard; }
+}
+protocols {
+    bgp {
+        group fabric-edge {
+            type external;
+            export export-all;
+            neighbor 10.10.102.2 { peer-as 65000; }
+        }
+    }
+}
+policy-options { policy-statement export-all { then accept; } }
+interfaces { et-0/0/1 { unit 0 { family inet { address 10.10.102.1/24; } } } }
