@@ -8146,11 +8146,12 @@ public final class FlatJuniperGrammarTest {
 
   @Test
   public void testRoutingInstancesEvpnIpPrefixRoutesExtraction() {
-
+    JuniperConfiguration juniperConfiguration = parseJuniperConfig("routing-instance-vrf-evpn-ip-prefix-routes");
   }
 
   @Test
   public void testSwitchOptionsRouteDistinguisherWithVrf() {
+    JuniperConfiguration juniperConfiguration = parseJuniperConfig("switch-options-route-distinguisher");
 
   }
 
