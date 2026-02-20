@@ -4206,6 +4206,11 @@ public final class FlatJuniperGrammarTest {
         c,
         hasInterface(
             "ge-0/10/0.0", allOf(hasAccessVlan(nullValue()), hasAllowedVlans(IntegerSpace.EMPTY))));
+    // Ensure a vlan-id can be present and that it can be cleared back to null.
+    Integer current_vlan = 10;
+    assertEquals(c.getAllInterfaces().get("irb.10").getVlan(), current_vlan);
+    c.getAllInterfaces().get("irb.10").setVlan(null);
+    assertThat(c.getAllInterfaces().get("irb.10").getVlan(), nullValue());
   }
 
   @Test
@@ -4217,11 +4222,7 @@ public final class FlatJuniperGrammarTest {
 
     assertTrue(serverGroups.get("EMPTY").getServers().isEmpty());
     assertThat(serverGroups.get("SG1").getServers(), contains(Ip.parse("1.1.1.1")));
-    // Ensure a vlan-id can be present and that it can be cleared back to null.
-    Integer current_vlan = 10;
-    assertEquals(c.getAllInterfaces().get("irb.10").getVlan(), current_vlan);
-    c.getAllInterfaces().get("irb.10").setVlan(null);
-    assertThat(c.getAllInterfaces().get("irb.10").getVlan(), nullValue());
+    
   }
 
   @Test
