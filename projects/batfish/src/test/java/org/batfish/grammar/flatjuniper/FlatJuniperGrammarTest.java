@@ -346,6 +346,7 @@ import org.batfish.datamodel.bgp.AddressFamily;
 import org.batfish.datamodel.bgp.AddressFamilyCapabilities;
 import org.batfish.datamodel.bgp.BgpConfederation;
 import org.batfish.datamodel.bgp.RouteDistinguisher;
+import org.batfish.datamodel.bgp.community.ExtendedCommunity;
 import org.batfish.datamodel.bgp.community.StandardCommunity;
 import org.batfish.datamodel.collections.NodeInterfacePair;
 import org.batfish.datamodel.isis.IsisHelloAuthenticationType;
@@ -418,6 +419,7 @@ import org.batfish.representation.juniper.Condition;
 import org.batfish.representation.juniper.DhcpRelayServerGroup;
 import org.batfish.representation.juniper.DscpUtil;
 import org.batfish.representation.juniper.EvpnEncapsulation;
+import org.batfish.representation.juniper.EvpnIpPrefixRoutes;
 import org.batfish.representation.juniper.FirewallFilter;
 import org.batfish.representation.juniper.FwFrom;
 import org.batfish.representation.juniper.FwFromDestinationPort;
@@ -506,6 +508,7 @@ import org.batfish.representation.juniper.ScreenOption;
 import org.batfish.representation.juniper.Srlg;
 import org.batfish.representation.juniper.StaticRouteV4;
 import org.batfish.representation.juniper.StaticRouteV6;
+import org.batfish.representation.juniper.SwitchOptions;
 import org.batfish.representation.juniper.TcpFinNoAck;
 import org.batfish.representation.juniper.TcpNoFlag;
 import org.batfish.representation.juniper.TcpSynFin;
@@ -2275,6 +2278,37 @@ public final class FlatJuniperGrammarTest {
         c.getMasterLogicalSystem().getEvpn().getExtendedVniList());
   }
 
+  @Test
+  public void testEvpnIpPrefixRoutesExtraction() {
+    JuniperConfiguration c = parseJuniperConfig("juniper-evpn-ip-prefix-routes");
+    RoutingInstance ri = c.getMasterLogicalSystem().getRoutingInstances().get("FOO");
+    assertNotNull(ri);
+    EvpnIpPrefixRoutes ipPrefixRoutes = ri.getEvpnIpPrefixRoutes();
+    assertNotNull(ipPrefixRoutes);
+    assertEquals(
+        EvpnIpPrefixRoutes.AdvertiseMode.DIRECT_NEXTHOP, ipPrefixRoutes.getAdvertise());
+    assertEquals(EvpnEncapsulation.VXLAN, ipPrefixRoutes.getEncapsulation());
+    assertEquals(Integer.valueOf(1011), ipPrefixRoutes.getVni());
+    assertEquals("FOO-vrf-import", ipPrefixRoutes.getImportPolicy());
+    assertEquals("FOO-vrf-export", ipPrefixRoutes.getExportPolicy());
+  }
+
+  @Test
+  public void testSwitchOptionsExtraction() {
+    JuniperConfiguration c = parseJuniperConfig("juniper-switch-options");
+    SwitchOptions so = c.getMasterLogicalSystem().getSwitchOptions();
+    assertNotNull(so);
+    assertEquals("lo0.0", so.getVtepSourceInterface());
+    assertEquals(
+        RouteDistinguisher.from(Ip.parse("172.1.1.1"), 1111), so.getRouteDistinguisher());
+    assertEquals("evpn-switching", so.getVrfImport());
+    assertTrue(so.getVrfTargetAuto());
+    assertFalse(so.getVrfTargetCommunities().isEmpty());
+    assertEquals(
+        ExtendedCommunity.target(2222, 1111), so.getVrfTargetCommunities().get(0));
+  }
+
+  
   @Test
   public void testFirewallFilterReferences() throws IOException {
     String hostname = "firewall-filters";

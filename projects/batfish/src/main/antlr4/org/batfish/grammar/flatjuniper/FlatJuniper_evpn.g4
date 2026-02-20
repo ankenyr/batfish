@@ -127,6 +127,7 @@ p_evpn
         e_default_gateway
         | e_encapsulation
         | e_extended_vni_list
+        | e_ip_prefix_routes
         | e_multicast_mode
         | e_vni_options
         | e_duplicate_mac_detection_null

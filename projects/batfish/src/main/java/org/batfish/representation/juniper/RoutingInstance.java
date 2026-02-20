@@ -60,6 +60,7 @@ public class RoutingInstance implements Serializable {
   private final JuniperSystem _system;
   private @Nullable Resolution _resolution;
   private @Nonnull Map<String, BridgeDomain> _bridgeDomains;
+  private @Nullable EvpnIpPrefixRoutes _evpnIpPrefixRoutes;
 
   public RoutingInstance(@Nonnull String name) {
     _aggregateRouteDefaults = initAggregateRouteDefaults();
@@ -365,5 +366,20 @@ public class RoutingInstance implements Serializable {
               .build();
     }
     return bd;
+  }
+
+  public @Nullable EvpnIpPrefixRoutes getEvpnIpPrefixRoutes() {
+    return _evpnIpPrefixRoutes;
+  }
+
+  public @Nonnull EvpnIpPrefixRoutes getOrCreateEvpnIpPrefixRoutes() {
+    if (_evpnIpPrefixRoutes == null) {
+      _evpnIpPrefixRoutes = new EvpnIpPrefixRoutes();
+    }
+    return _evpnIpPrefixRoutes;
+  }
+
+  public void setEvpnIpPrefixRoutes(@Nullable EvpnIpPrefixRoutes evpnIpPrefixRoutes) {
+    _evpnIpPrefixRoutes = evpnIpPrefixRoutes;
   }
 }

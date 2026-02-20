@@ -2156,6 +2156,53 @@ public final class JuniperConfiguration extends VendorConfiguration {
         _c.getAllInterfaces().get(l3Interface).getVrf().addLayer3Vni(vniSettings);
       }
     }
+    // Convert ip-prefix-routes (EVPN Type 5) from routing instances
+    convertEvpnIpPrefixRoutes();
+  }
+
+  /**
+   * Convert EVPN ip-prefix-routes configuration from routing instances into Layer3Vni settings.
+   * This handles the Juniper equivalent of L3 VNI mapping (similar to Arista's "vxlan vrf VRF vni
+   * NNN").
+   */
+  private void convertEvpnIpPrefixRoutes() {
+    // Determine the VTEP source interface/IP.
+    // First check switch-options, then fall back to per-RI vtep-source-interface.
+    SwitchOptions switchOptions = _masterLogicalSystem.getSwitchOptions();
+    String globalVtepSource = switchOptions != null ? switchOptions.getVtepSourceInterface() : null;
+
+    for (Entry<String, RoutingInstance> entry :
+        _masterLogicalSystem.getRoutingInstances().entrySet()) {
+      String riName = entry.getKey();
+      RoutingInstance ri = entry.getValue();
+      EvpnIpPrefixRoutes ipPrefixRoutes = ri.getEvpnIpPrefixRoutes();
+      if (ipPrefixRoutes == null || ipPrefixRoutes.getVni() == null) {
+        continue;
+      }
+
+      Vrf vrf = _c.getVrfs().get(riName);
+      if (vrf == null) {
+        continue;
+      }
+
+      // Resolve VTEP source address from the global vtep-source-interface
+      Ip sourceAddress = null;
+      if (globalVtepSource != null) {
+        org.batfish.datamodel.Interface vtepIface = _c.getAllInterfaces().get(globalVtepSource);
+        if (vtepIface != null && vtepIface.getConcreteAddress() != null) {
+          sourceAddress = vtepIface.getConcreteAddress().getIp();
+        }
+      }
+
+      Layer3Vni l3vni =
+          Layer3Vni.builder()
+              .setVni(ipPrefixRoutes.getVni())
+              .setSourceAddress(sourceAddress)
+              .setUdpPort(Vni.DEFAULT_UDP_PORT)
+              .setSrcVrf(riName)
+              .build();
+      vrf.addLayer3Vni(l3vni);
+    }
   }
 
   private @Nullable Integer computeAccessVlan(String ifaceName, List<VlanMember> vlanMembers) {
