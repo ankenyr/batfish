@@ -2311,29 +2311,70 @@ public final class JuniperConfiguration extends VendorConfiguration {
   }
 
   private void convertL2Vni() {
+    System.out.println("Filename: " + this._filename);
+    if (Objects.equals(this._filename, "configs/mgmt.lab-2-sn")) {
+      // This config has VLANs with VNI configured but no L3 interface, which is not valid and causes
+      // issues in conversion. Skipping L2VNI conversion for this config.
+      System.out.println("foo");
+    }
     for (Vlan vxlan : _masterLogicalSystem.getNamedVlans().values()) {
+      System.out.println("Looking for vxlan: " + vxlan.getName());
       String vtepSource = _masterLogicalSystem.getSwitchOptions().getVtepSourceInterface();
       String l3Interface = vxlan.getL3Interface();
-      if (vxlan.getVniId() == null) {
+
+      // If the VLAN doesn't have a VNI set directly, try to find it from the routing instance.
+      // Look for an interface unit whose vlan-id matches this VLAN's vlan-id, then get the VNI
+      // from that unit's routing instance's EVPN ip-prefix-routes configuration.
+      Integer vniId = vxlan.getVniId();
+      System.out.printf("Creating l2 vni for vlan %s, vtep source: %s, l3 interface: %s\n", vxlan.getName(), vtepSource, l3Interface);
+      if (vniId == null && vxlan.getVlanId() != null) {
+        System.out.println("vniId is null, looking for interface with vlan id: " + vxlan.getVlanId());
+        for (Interface iface : _masterLogicalSystem.getInterfaces().values()) {
+          for (Interface unit : iface.getUnits().values()) {
+            if (unit.getVlanId() != null && unit.getVlanId().equals(vxlan.getVlanId())) {
+              RoutingInstance ri = unit.getRoutingInstance();
+              if (ri != null) {
+                EvpnIpPrefixRoutes ipr = ri.getEvpnIpPrefixRoutes();
+                if (ipr != null && ipr.getVni() != null) {
+                  System.out.printf("Found matching interface %s with vlan id %d, got vni %d from its routing instance\n",
+                      unit.getName(), unit.getVlanId(), ipr.getVni());
+                  vniId = ipr.getVni();
+                  break;
+                }
+              }
+            }
+          }
+          if (vniId != null) {
+            break;
+          }
+        }
+        if (vniId == null) {
+          continue;
+        }
+      }
+      if (vniId == null) {
         continue;
       }
       if (vxlan.getVlanId() != null && l3Interface == null) {
+        System.out.println("Building vni setting for vlan: " + vxlan.getName());
         if (vtepSource == null) {
+          System.out.println("Vtep is null, building vni setting without source address");
           Layer2Vni vniSettings =
               Layer2Vni.builder()
-                  .setVni(vxlan.getVniId())
+                  .setVni(vniId)
                   .setVlan(vxlan.getVlanId())
                   .setUdpPort(Vni.DEFAULT_UDP_PORT)
                   .setBumTransportMethod(UNICAST_FLOOD_GROUP)
                   .setSrcVrf(_masterLogicalSystem.getDefaultRoutingInstance().getName())
                   .build();
-          if (_c.getDefaultVrf().getLayer2Vnis().get(vxlan.getVniId()) == null) {
+          if (_c.getDefaultVrf().getLayer2Vnis().get(vniId) == null) {
             _c.getDefaultVrf().addLayer2Vni(vniSettings);
           }
         } else {
+          System.out.printf("Building VniID: %d, VlanId: %d, vxlan id: %s address: %s\n", vniId, vxlan.getVlanId(), vxlan.getName(), getInterfaceOrUnitByName(vtepSource).get().getPrimaryAddress().getIp());
           Layer2Vni vniSettings =
               Layer2Vni.builder()
-                  .setVni(vxlan.getVniId())
+                  .setVni(vniId)
                   .setVlan(vxlan.getVlanId())
                   .setSourceAddress(
                       getInterfaceOrUnitByName(vtepSource).get().getPrimaryAddress().getIp())
@@ -2341,7 +2382,7 @@ public final class JuniperConfiguration extends VendorConfiguration {
                   .setBumTransportMethod(UNICAST_FLOOD_GROUP)
                   .setSrcVrf(_masterLogicalSystem.getDefaultRoutingInstance().getName())
                   .build();
-          if (_c.getDefaultVrf().getLayer2Vnis().get(vxlan.getVniId()) == null) {
+          if (_c.getDefaultVrf().getLayer2Vnis().get(vniId) == null) {
             _c.getDefaultVrf().addLayer2Vni(vniSettings);
           }
         }

@@ -510,6 +510,7 @@ import org.batfish.representation.juniper.ScreenOption;
 import org.batfish.representation.juniper.Srlg;
 import org.batfish.representation.juniper.StaticRouteV4;
 import org.batfish.representation.juniper.StaticRouteV6;
+import org.batfish.representation.juniper.SwitchOptions;
 import org.batfish.representation.juniper.TcpFinNoAck;
 import org.batfish.representation.juniper.TcpNoFlag;
 import org.batfish.representation.juniper.TcpSynFin;
@@ -8159,11 +8160,13 @@ public final class FlatJuniperGrammarTest {
     assertThat(ipPrefixRoutes.getExportPolicy(), equalTo("FOO-vrf-export"));
   }
 
-//   @Test
-//   public void testSwitchOptionsRouteDistinguisherWithVrf() {
-//     JuniperConfiguration juniperConfiguration = parseJuniperConfig("switch-options-route-distinguisher");
-
-//   }
+  @Test
+  public void testSwitchOptionsRouteDistinguisherWithVrf() {
+    JuniperConfiguration juniperConfiguration = parseJuniperConfig("switch-options-route-distinguisher");
+    SwitchOptions switchOptions = juniperConfiguration.getMasterLogicalSystem().getSwitchOptions();
+    assertThat(switchOptions.getVrfImportPolicy(), equalTo("evpn-switching"));
+    assertThat(switchOptions.getVrfExportPolicy(), equalTo("evpn-exporting"));
+  }
 
 
 

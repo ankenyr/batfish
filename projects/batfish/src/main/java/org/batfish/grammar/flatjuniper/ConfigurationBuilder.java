@@ -204,6 +204,8 @@ import static org.batfish.representation.juniper.JuniperStructureUsage.SNMP_COMM
 import static org.batfish.representation.juniper.JuniperStructureUsage.SNMP_COMMUNITY_LOGICAL_SYSTEM;
 import static org.batfish.representation.juniper.JuniperStructureUsage.SNMP_COMMUNITY_ROUTING_INSTANCE;
 import static org.batfish.representation.juniper.JuniperStructureUsage.STATIC_ROUTE_NEXT_HOP_INTERFACE;
+import static org.batfish.representation.juniper.JuniperStructureUsage.SWITCH_OPTIONS_VRF_EXPORT;
+import static org.batfish.representation.juniper.JuniperStructureUsage.SWITCH_OPTIONS_VRF_IMPORT;
 import static org.batfish.representation.juniper.JuniperStructureUsage.SYSLOG_HOST_ROUTING_INSTANCE;
 import static org.batfish.representation.juniper.JuniperStructureUsage.TACPLUS_SERVER_ROUTING_INSTANCE;
 import static org.batfish.representation.juniper.JuniperStructureUsage.VLAN_INTERFACE;
@@ -942,6 +944,8 @@ import org.batfish.grammar.flatjuniper.FlatJuniperParser.Snmpcl_networkContext;
 import org.batfish.grammar.flatjuniper.FlatJuniperParser.Snmpcls_routing_instanceContext;
 import org.batfish.grammar.flatjuniper.FlatJuniperParser.Snmptg_targetsContext;
 import org.batfish.grammar.flatjuniper.FlatJuniperParser.So_route_distinguisherContext;
+import org.batfish.grammar.flatjuniper.FlatJuniperParser.So_vrf_exportContext;
+import org.batfish.grammar.flatjuniper.FlatJuniperParser.So_vrf_importContext;
 import org.batfish.grammar.flatjuniper.FlatJuniperParser.So_vtep_source_interfaceContext;
 import org.batfish.grammar.flatjuniper.FlatJuniperParser.Srlg_costContext;
 import org.batfish.grammar.flatjuniper.FlatJuniperParser.Srlg_valueContext;
@@ -3885,6 +3889,22 @@ public class ConfigurationBuilder extends FlatJuniperParserBaseListener
     // TODO: add reference
     String ifaceName = getInterfaceFullName(ctx.iface);
     _currentLogicalSystem.getOrInitSwitchOptions().setVtepSourceInterface(ifaceName);
+  }
+
+  @Override
+  public void exitSo_vrf_import(So_vrf_importContext ctx) {
+    String name = toString(ctx.name);
+    _configuration.referenceStructure(
+        POLICY_STATEMENT, name, SWITCH_OPTIONS_VRF_IMPORT, getLine(ctx.name.getStart()));
+    _currentLogicalSystem.getOrInitSwitchOptions().setVrfImportPolicy(name);
+  }
+
+  @Override
+  public void exitSo_vrf_export(So_vrf_exportContext ctx) {
+    String name = toString(ctx.name);
+    _configuration.referenceStructure(
+        POLICY_STATEMENT, name, SWITCH_OPTIONS_VRF_EXPORT, getLine(ctx.name.getStart()));
+    _currentLogicalSystem.getOrInitSwitchOptions().setVrfExportPolicy(name);
   }
 
   @Override

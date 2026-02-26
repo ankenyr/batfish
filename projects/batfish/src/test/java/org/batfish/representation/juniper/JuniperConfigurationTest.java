@@ -1387,6 +1387,7 @@ public class JuniperConfigurationTest {
     VrfLeakConfig defaultLeak = defaultVrf.getVrfLeakConfig();
     assertNotNull("default VRF should have VRF leak config", defaultLeak);
     assertThat(defaultLeak.getBgpv4ToEvpnVrfLeakConfigs(), hasSize(2));
+    config._c.getVrfs().get("vrf1").getLayer2Vnis()
 
     // vrf1's redistribution policy should exist and reference the export policy
     String redistPolicyName = JuniperConfiguration.generatedEvpnIprRedistPolicyName("vrf1");
