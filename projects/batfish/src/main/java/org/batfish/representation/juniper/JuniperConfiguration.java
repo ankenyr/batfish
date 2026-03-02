@@ -2355,7 +2355,7 @@ public final class JuniperConfiguration extends VendorConfiguration {
       if (vniId == null) {
         continue;
       }
-      if (vxlan.getVlanId() != null && l3Interface == null) {
+      if (vxlan.getVlanId() != null) {
         System.out.println("Building vni setting for vlan: " + vxlan.getName());
         if (vtepSource == null) {
           System.out.println("Vtep is null, building vni setting without source address");
@@ -4340,7 +4340,7 @@ public final class JuniperConfiguration extends VendorConfiguration {
       convertL2Vni();
 
       // convert l3vni for l3vniproperties.
-      convertL3Vni();
+      // convertL3Vni();
 
       // convert EVPN VRF leaking for type-5 (IP prefix) routes
       convertEvpnVrfLeaking();
