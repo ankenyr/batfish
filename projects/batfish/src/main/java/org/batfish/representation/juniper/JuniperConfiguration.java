@@ -7,12 +7,14 @@ import static org.batfish.datamodel.BumTransportMethod.UNICAST_FLOOD_GROUP;
 import static org.batfish.datamodel.Names.escapeNameIfNeeded;
 import static org.batfish.datamodel.Names.generatedBgpPeerExportPolicyName;
 import static org.batfish.datamodel.Names.generatedBgpPeerImportPolicyName;
+import static org.batfish.datamodel.Names.generatedEvpnToBgpv4VrfLeakPolicyName;
 import static org.batfish.datamodel.Names.zoneToZoneFilter;
 import static org.batfish.datamodel.acl.AclLineMatchExprs.and;
 import static org.batfish.datamodel.acl.AclLineMatchExprs.matchSrcInterface;
 import static org.batfish.datamodel.acl.AclLineMatchExprs.or;
 import static org.batfish.datamodel.bgp.AllowRemoteAsOutMode.ALWAYS;
 import static org.batfish.datamodel.bgp.AllowRemoteAsOutMode.EXCEPT_FIRST;
+import static org.batfish.datamodel.bgp.AllowRemoteAsOutMode.NEVER;
 import static org.batfish.datamodel.bgp.LocalOriginationTypeTieBreaker.NO_PREFERENCE;
 import static org.batfish.datamodel.bgp.NextHopIpTieBreaker.HIGHEST_NEXT_HOP_IP;
 import static org.batfish.datamodel.routing_policy.statement.Statements.ReturnFalse;
@@ -51,6 +53,7 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -74,11 +77,13 @@ import org.batfish.datamodel.BgpAuthenticationSettings;
 import org.batfish.datamodel.BgpPassivePeerConfig;
 import org.batfish.datamodel.BgpPeerConfig.Builder;
 import org.batfish.datamodel.BgpProcess;
+import org.batfish.datamodel.Bgpv4ToEvpnVrfLeakConfig;
 import org.batfish.datamodel.ConcreteInterfaceAddress;
 import org.batfish.datamodel.Configuration;
 import org.batfish.datamodel.ConfigurationFormat;
 import org.batfish.datamodel.ConnectedRouteMetadata;
 import org.batfish.datamodel.DeviceModel;
+import org.batfish.datamodel.EvpnToBgpv4VrfLeakConfig;
 import org.batfish.datamodel.ExprAclLine;
 import org.batfish.datamodel.FirewallSessionInterfaceInfo;
 import org.batfish.datamodel.FirewallSessionInterfaceInfo.Action;
@@ -129,8 +134,13 @@ import org.batfish.datamodel.acl.PermittedByAcl;
 import org.batfish.datamodel.acl.TrueExpr;
 import org.batfish.datamodel.bgp.AddressFamilyCapabilities;
 import org.batfish.datamodel.bgp.BgpConfederation;
+import org.batfish.datamodel.bgp.EvpnAddressFamily;
 import org.batfish.datamodel.bgp.Ipv4UnicastAddressFamily;
+import org.batfish.datamodel.bgp.Layer2VniConfig;
+import org.batfish.datamodel.bgp.Layer3VniConfig;
+import org.batfish.datamodel.bgp.RouteDistinguisher;
 import org.batfish.datamodel.bgp.community.Community;
+import org.batfish.datamodel.bgp.community.ExtendedCommunity;
 import org.batfish.datamodel.dataplane.rib.RibId;
 import org.batfish.datamodel.isis.IsisInterfaceMode;
 import org.batfish.datamodel.isis.IsisLevel;
@@ -152,6 +162,8 @@ import org.batfish.datamodel.routing_policy.RoutingPolicy;
 import org.batfish.datamodel.routing_policy.communities.ColonSeparatedRendering;
 import org.batfish.datamodel.routing_policy.communities.CommunityIs;
 import org.batfish.datamodel.routing_policy.communities.CommunityMatchAny;
+import org.batfish.datamodel.routing_policy.communities.InputCommunities;
+import org.batfish.datamodel.routing_policy.communities.MatchCommunities;
 import org.batfish.datamodel.routing_policy.communities.CommunityMatchExpr;
 import org.batfish.datamodel.routing_policy.communities.CommunityMatchRegex;
 import org.batfish.datamodel.routing_policy.communities.CommunityNot;
@@ -167,6 +179,7 @@ import org.batfish.datamodel.routing_policy.expr.BooleanExprs;
 import org.batfish.datamodel.routing_policy.expr.CallExpr;
 import org.batfish.datamodel.routing_policy.expr.Conjunction;
 import org.batfish.datamodel.routing_policy.expr.ConjunctionChain;
+import org.batfish.datamodel.routing_policy.expr.LiteralInt;
 import org.batfish.datamodel.routing_policy.expr.DestinationNetwork;
 import org.batfish.datamodel.routing_policy.expr.Disjunction;
 import org.batfish.datamodel.routing_policy.expr.ExplicitPrefixSet;
@@ -189,6 +202,7 @@ import org.batfish.datamodel.routing_policy.statement.SetDefaultPolicy;
 import org.batfish.datamodel.routing_policy.statement.SetLocalPreference;
 import org.batfish.datamodel.routing_policy.statement.SetOrigin;
 import org.batfish.datamodel.routing_policy.statement.SetOspfMetricType;
+import org.batfish.datamodel.routing_policy.statement.SetWeight;
 import org.batfish.datamodel.routing_policy.statement.Statement;
 import org.batfish.datamodel.routing_policy.statement.Statements;
 import org.batfish.datamodel.routing_policy.statement.TraceableStatement;
@@ -852,6 +866,30 @@ public final class JuniperConfiguration extends VendorConfiguration {
 
       // inherit update-source
       neighbor.setLocalIp(ig.getLocalAddress());
+      if (ig.getEvpnAf() != null) {
+        EvpnAddressFamily.Builder evpnAfBuilder = EvpnAddressFamily.builder();
+        evpnAfBuilder
+            .setPropagateUnmatched(true)
+            .setAddressFamilyCapabilities(
+                AddressFamilyCapabilities.builder()
+                    .setSendCommunity(true)
+                    .setSendExtendedCommunity(true)
+                    .setAllowRemoteAsOut(NEVER)
+                    .build());
+        evpnAfBuilder.setL2Vnis(convertL2Evpn().build());
+        evpnAfBuilder.setL3Vnis(convertL3Evpn().build());
+        // Wire export/import policies to the EVPN AF (same as IPv4 unicast peer policies)
+        evpnAfBuilder.setExportPolicy(peerExportPolicyName);
+        evpnAfBuilder.setImportPolicy(peerImportPolicyName);
+        // Set NVE IP (VTEP source) if available
+        String vtepSource = _masterLogicalSystem.getSwitchOptions().getVtepSourceInterface();
+        if (vtepSource != null) {
+          getInterfaceOrUnitByName(vtepSource)
+              .filter(iface -> iface.getPrimaryAddress() != null)
+              .ifPresent(iface -> evpnAfBuilder.setNveIp(iface.getPrimaryAddress().getIp()));
+        }
+        neighbor.setEvpnAddressFamily(evpnAfBuilder.build());
+      }
       neighbor.setBgpProcess(proc);
       neighbor.setIpv4UnicastAddressFamily(
           ipv4AfBuilder.setAddressFamilyCapabilities(ipv4AfSettingsBuilder.build()).build());
@@ -2113,49 +2151,574 @@ public final class JuniperConfiguration extends VendorConfiguration {
     return groupsBuilder.build();
   }
 
-  private void convertVxlan() {
+  /** Convert L2 VNI information for EVPN address family config (Layer2VniConfig). */
+  private @Nonnull ImmutableSet.Builder<Layer2VniConfig> convertL2Evpn() {
+    ImmutableSet.Builder<Layer2VniConfig> l2Vnis = ImmutableSet.builder();
     for (Vlan vxlan : _masterLogicalSystem.getNamedVlans().values()) {
-      if (vxlan.getVniId() == null) {
+      if (vxlan.getVniId() == null || vxlan.getVlanId() == null) {
+        // L2 VNIs need both a VNI ID and a VLAN ID.
+        // Note: VLANs with l3-interface (IRB) are still L2 VNIs in ERB EVPN designs.
+        // The l3-interface provides inter-VLAN routing, not an L3 VNI designation.
         continue;
       }
+      ExtendedCommunity routeTarget = determineRouteTarget(vxlan);
+      if (routeTarget == null) {
+        long num = Long.decode("0x10" + Integer.toHexString(vxlan.getVniId()));
+        routeTarget = getDefaultRouteTarget(num);
+      }
+      Ip rdIp = _masterLogicalSystem.getDefaultRoutingInstance().getRouterId();
+      if (rdIp == null) {
+        rdIp =
+            getInterfaceOrUnitByName("lo0.0")
+                .map(iface -> iface.getPrimaryAddress().getIp())
+                .orElse(Ip.parse("127.0.0.1"));
+      }
+      RouteDistinguisher rd = RouteDistinguisher.from(rdIp, vxlan.getVlanId());
+      //RouteDistinguisher rd =
+      //    RouteDistinguisher.from(rdIp, vxlan.getVniId());
+      l2Vnis.add(
+          Layer2VniConfig.builder()
+              .setVni(vxlan.getVniId())
+              .setVrf(_masterLogicalSystem.getDefaultRoutingInstance().getName())
+              .setRouteDistinguisher(rd)
+              .setRouteTarget(routeTarget)
+              .setImportRouteTarget(routeTarget.toString())
+              .build());
+    }
+    return l2Vnis;
+  }
+
+  private @Nonnull ImmutableSet.Builder<Layer3VniConfig> convertL3Evpn() {
+    ImmutableSet.Builder<Layer3VniConfig> l3Vnis = ImmutableSet.builder();
+    for (Vlan vxlan : _masterLogicalSystem.getNamedVlans().values()) {
       String l3Interface = vxlan.getL3Interface();
-      if (l3Interface == null) {
-        if (vxlan.getVlanId() == null) {
-          continue;
-        }
-        // Should be a l2vni
-        Layer2Vni vniSettings =
-            Layer2Vni.builder()
-                .setVni(vxlan.getVniId())
-                .setVlan(vxlan.getVlanId())
-                .setUdpPort(Vni.DEFAULT_UDP_PORT)
-                .setBumTransportMethod(UNICAST_FLOOD_GROUP)
-                .setSrcVrf(_masterLogicalSystem.getDefaultRoutingInstance().getName())
-                .build();
-        _c.getDefaultVrf().addLayer2Vni(vniSettings);
+      if (vxlan.getVniId() == null || l3Interface == null) {
+        continue;
+      }
+
+      ExtendedCommunity routeTarget = determineRouteTarget(vxlan);
+
+      if (routeTarget == null) {
+        long num = Long.decode("0x10" + Integer.toHexString(vxlan.getVniId()));
+        routeTarget = getDefaultRouteTarget(num);
+      }
+
+      String createdRd = determineRouteDistinguisher(vxlan, l3Interface);
+
+      l3Vnis.add(buildLayer3VniConfig(vxlan, routeTarget, createdRd, l3Interface));
+    }
+
+    return l3Vnis;
+  }
+
+  private ExtendedCommunity determineRouteTarget(Vlan vxlan) {
+    ExtendedCommunity routeTarget = null;
+    if (_masterLogicalSystem.getVniOptions() != null
+        && _masterLogicalSystem.getVniOptions().containsKey(vxlan.getVniId())) {
+      VniOptions vniOptions = _masterLogicalSystem.getVniOptions().get(vxlan.getVniId());
+      if (vniOptions.getVrfTargetCommunityorAuto().isAuto()) {
+        routeTarget = generateAutoRouteTarget(vxlan.getVniId());
       } else {
-        String vtepSource = _masterLogicalSystem.getSwitchOptions().getVtepSourceInterface();
-        if (vtepSource == null) {
-          continue;
-        }
-        Interface iface =
-            _masterLogicalSystem.getDefaultRoutingInstance().getInterfaces().get(l3Interface);
-        if (iface == null) {
-          continue;
-        }
-        if (iface.getPrimaryAddress() == null) {
-          continue;
-        }
-        Layer3Vni vniSettings =
-            Layer3Vni.builder()
-                .setVni(vxlan.getVniId())
-                .setSourceAddress(iface.getPrimaryAddress().getIp())
-                .setUdpPort(Vni.DEFAULT_UDP_PORT)
-                .setSrcVrf(iface.getRoutingInstance().getName())
-                .build();
-        _c.getAllInterfaces().get(l3Interface).getVrf().addLayer3Vni(vniSettings);
+        routeTarget = vniOptions.getVrfTargetCommunityorAuto().getExtendedCommunity();
       }
     }
+    return routeTarget;
+  }
+
+  private ExtendedCommunity generateAutoRouteTarget(int vniId) {
+    long num = Long.decode("0x10" + Integer.toHexString(vniId));
+    return ExtendedCommunity.parse(
+        "target:" + _masterLogicalSystem.getDefaultRoutingInstance().getAs() + ":" + num);
+  }
+
+  private ExtendedCommunity getDefaultRouteTarget(long num) {
+    return ExtendedCommunity.parse(
+        "target:" + _masterLogicalSystem.getDefaultRoutingInstance().getAs() + ":" + num);
+  }
+
+  private String determineRouteDistinguisher(Vlan vxlan, String l3Interface) {
+    String createdRd = null;
+    if (getInterfaceOrUnitByName(l3Interface).get().getRoutingInstance() != null
+        && getInterfaceOrUnitByName(l3Interface)
+                .get()
+                .getRoutingInstance()
+                .getRouteDistinguisherId()
+            != null) {
+      createdRd =
+          getInterfaceOrUnitByName(l3Interface).get().getRoutingInstance().getRouteDistinguisherId()
+              + ":"
+              + getInterfaceOrUnitByName(l3Interface).get().getRoutingInstance().getAs();
+    }
+    if (createdRd == null) {
+      Random random = new Random();
+      int number = random.ints(4096, 9999).findFirst().getAsInt();
+      if (vxlan.getVlanId() != null) {
+        number = vxlan.getVlanId();
+      }
+      Ip rdIp = _masterLogicalSystem.getDefaultRoutingInstance().getRouterId();
+      if (rdIp == null) {
+        rdIp = getInterfaceOrUnitByName("lo0.0")
+                //.map(iface -> iface.getPrimaryIp()) // Use whatever helper method Batfish provides for IP
+                .map(iface -> iface.getPrimaryAddress().getIp()) // Use primary address IP
+                .orElse(Ip.parse("127.0.0.1")); // Absolute last resort
+      }
+
+      createdRd = rdIp.toString() + ":" + number;
+    }
+    return createdRd;
+  }
+
+  private Layer3VniConfig buildLayer3VniConfig(
+      Vlan vxlan, ExtendedCommunity routeTarget, String createdRd, String l3Interface) {
+    return Layer3VniConfig.builder()
+        .setAdvertiseV4Unicast(true)
+        .setVni(vxlan.getVniId())
+        .setRouteTarget(routeTarget)
+        .setImportRouteTarget(routeTarget.toString())
+        .setRouteDistinguisher(RouteDistinguisher.parse(createdRd))
+        .setVrf(getInterfaceOrUnitByName(l3Interface).get().getRoutingInstance().getName())
+        .build();
+  }
+
+  private void convertL3Vni() {
+    String vtepSource = _masterLogicalSystem.getSwitchOptions().getVtepSourceInterface();
+
+    // Note: Named VLANs with both a VNI and an l3-interface (e.g., VLAN100 with vni 10100 and
+    // l3-interface irb.100) are L2 VNIs with IRB gateways, NOT L3 VNIs. They are handled by
+    // convertL2Vni(). The true L3 VNIs for EVPN symmetric routing come from routing-instance
+    // ip-prefix-routes { vni ...; } configuration.
+
+    // Create Layer3Vni from routing-instance EVPN ip-prefix-routes VNIs.
+    // These are the L3 VNIs for EVPN symmetric routing (Type-5) and get placed on the
+    // default VRF, since the VTEP source interface lives in the default routing instance.
+    Vrf defaultVrf = _c.getDefaultVrf();
+    if (defaultVrf != null) {
+      @Nullable
+      Ip vtepSourceAddress =
+          vtepSource != null
+              ? getInterfaceOrUnitByName(vtepSource)
+                  .map(iface -> iface.getPrimaryAddress() != null
+                      ? iface.getPrimaryAddress().getIp()
+                      : null)
+                  .orElse(null)
+              : null;
+      for (RoutingInstance ri : _masterLogicalSystem.getRoutingInstances().values()) {
+        EvpnIpPrefixRoutes ipr = ri.getEvpnIpPrefixRoutes();
+        if (ipr == null || ipr.getVni() == null) {
+          continue;
+        }
+        int vniId = ipr.getVni();
+        if (defaultVrf.getLayer3Vnis().get(vniId) != null) {
+          continue; // already exists
+        }
+        Layer3Vni.Builder builder =
+            Layer3Vni.builder()
+                .setVni(vniId)
+                .setUdpPort(Vni.DEFAULT_UDP_PORT)
+                .setSrcVrf(Configuration.DEFAULT_VRF_NAME);
+        if (vtepSourceAddress != null) {
+          builder.setSourceAddress(vtepSourceAddress);
+        }
+        defaultVrf.addLayer3Vni(builder.build());
+      }
+    }
+  }
+
+  private void convertL2Vni() {
+    System.out.println("Filename: " + this._filename);
+    if (Objects.equals(this._filename, "configs/node1-1")) {
+      // This config has VLANs with VNI configured but no L3 interface, which is not valid and causes
+      // issues in conversion. Skipping L2VNI conversion for this config.
+      System.out.println("foo");
+    }
+    for (Vlan vxlan : _masterLogicalSystem.getNamedVlans().values()) {
+      System.out.println("Looking for vxlan: " + vxlan.getName());
+      String vtepSource = _masterLogicalSystem.getSwitchOptions().getVtepSourceInterface();
+      String l3Interface = vxlan.getL3Interface();
+
+      // If the VLAN doesn't have a VNI set directly, try to find it from the routing instance.
+      // Look for an interface unit whose vlan-id matches this VLAN's vlan-id, then get the VNI
+      // from that unit's routing instance's EVPN ip-prefix-routes configuration.
+      Integer vniId = vxlan.getVniId();
+      System.out.printf("Creating l2 vni for vlan %s, vtep source: %s, l3 interface: %s\n", vxlan.getName(), vtepSource, l3Interface);
+      if (vniId == null && vxlan.getVlanId() != null) {
+        System.out.println("vniId is null, looking for interface with vlan id: " + vxlan.getVlanId());
+        for (Interface iface : _masterLogicalSystem.getInterfaces().values()) {
+          for (Interface unit : iface.getUnits().values()) {
+            if (unit.getVlanId() != null && unit.getVlanId().equals(vxlan.getVlanId())) {
+              RoutingInstance ri = unit.getRoutingInstance();
+              if (ri != null) {
+                EvpnIpPrefixRoutes ipr = ri.getEvpnIpPrefixRoutes();
+                if (ipr != null && ipr.getVni() != null) {
+                  System.out.printf("Found matching interface %s with vlan id %d, got vni %d from its routing instance\n",
+                      unit.getName(), unit.getVlanId(), ipr.getVni());
+                  vniId = ipr.getVni();
+                  break;
+                }
+              }
+            }
+          }
+          if (vniId != null) {
+            break;
+          }
+        }
+        if (vniId == null) {
+          continue;
+        }
+      }
+      if (vniId == null) {
+        continue;
+      }
+      if (vxlan.getVlanId() != null) {
+        System.out.println("Building vni setting for vlan: " + vxlan.getName());
+        if (vtepSource == null) {
+          System.out.println("Vtep is null, building vni setting without source address");
+          Layer2Vni vniSettings =
+              Layer2Vni.builder()
+                  .setVni(vniId)
+                  .setVlan(vxlan.getVlanId())
+                  .setUdpPort(Vni.DEFAULT_UDP_PORT)
+                  .setBumTransportMethod(UNICAST_FLOOD_GROUP)
+                  .setSrcVrf(_masterLogicalSystem.getDefaultRoutingInstance().getName())
+                  .build();
+          if (_c.getDefaultVrf().getLayer2Vnis().get(vniId) == null) {
+            _c.getDefaultVrf().addLayer2Vni(vniSettings);
+          }
+        } else {
+          System.out.printf("Building VniID: %d, VlanId: %d, vxlan id: %s address: %s\n", vniId, vxlan.getVlanId(), vxlan.getName(), getInterfaceOrUnitByName(vtepSource).get().getPrimaryAddress().getIp());
+          Layer2Vni vniSettings =
+              Layer2Vni.builder()
+                  .setVni(vniId)
+                  .setVlan(vxlan.getVlanId())
+                  .setSourceAddress(
+                      getInterfaceOrUnitByName(vtepSource).get().getPrimaryAddress().getIp())
+                  .setUdpPort(Vni.DEFAULT_UDP_PORT)
+                  .setBumTransportMethod(UNICAST_FLOOD_GROUP)
+                  .setSrcVrf(_masterLogicalSystem.getDefaultRoutingInstance().getName())
+                  .build();
+          if (_c.getDefaultVrf().getLayer2Vnis().get(vniId) == null) {
+            _c.getDefaultVrf().addLayer2Vni(vniSettings);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Set up EVPN VRF leaking for type-5 (IP prefix) routes.
+   *
+   * <p>For each Juniper VRF that has EVPN ip-prefix-routes with advertise direct-nexthop, create:
+   *
+   * <ul>
+   *   <li>{@link Bgpv4ToEvpnVrfLeakConfig} on the default VRF to export the tenant VRF's BGP
+   *       routes into EVPN type-5
+   *   <li>{@link EvpnToBgpv4VrfLeakConfig} on the tenant VRF to import EVPN type-5 routes back
+   * </ul>
+   *
+   * <p>This follows the same pattern as Arista/NX-OS EVPN VRF leaking.
+   */
+  @VisibleForTesting
+  void convertEvpnVrfLeaking() {
+    Evpn evpn = _masterLogicalSystem.getEvpn();
+    if (evpn == null) {
+      return;
+    }
+    EvpnIpPrefixRoutes ipPrefixRoutes = evpn.getIpPrefixRoutes();
+    if (ipPrefixRoutes == null
+        || ipPrefixRoutes.getAdvertise() != EvpnIpPrefixRoutesAdvertise.DIRECT_NEXTHOP) {
+      return;
+    }
+
+    // For each named VLAN with an L3 VNI (i.e., l3Interface and VNI defined),
+    // set up cross-VRF EVPN leaking for the VRF associated with that L3 interface.
+    for (Vlan vxlan : _masterLogicalSystem.getNamedVlans().values()) {
+      String l3Interface = vxlan.getL3Interface();
+      if (vxlan.getVniId() == null || l3Interface == null) {
+        continue;
+      }
+      Optional<Interface> l3IfaceOpt = getInterfaceOrUnitByName(l3Interface);
+      if (!l3IfaceOpt.isPresent() || l3IfaceOpt.get().getRoutingInstance() == null) {
+        continue;
+      }
+      String vrfName = l3IfaceOpt.get().getRoutingInstance().getName();
+      Vrf tenantVrf = _c.getVrfs().get(vrfName);
+      Vrf defaultVrf = _c.getDefaultVrf();
+      if (tenantVrf == null || defaultVrf == null || vrfName.equals(Configuration.DEFAULT_VRF_NAME)) {
+        continue;
+      }
+
+      ExtendedCommunity exportRt = determineRouteTarget(vxlan);
+      if (exportRt == null) {
+        long num = Long.decode("0x10" + Integer.toHexString(vxlan.getVniId()));
+        exportRt = getDefaultRouteTarget(num);
+      }
+
+      // Determine route distinguisher for the VRF
+      String createdRd = determineRouteDistinguisher(vxlan, l3Interface);
+      RouteDistinguisher rd = RouteDistinguisher.parse(createdRd);
+
+      // Create Bgpv4ToEvpnVrfLeakConfig: export tenant VRF's BGPv4 routes into default VRF's EVPN
+      Bgpv4ToEvpnVrfLeakConfig bgpv4ToEvpnConfig =
+          Bgpv4ToEvpnVrfLeakConfig.builder()
+              .setImportFromVrf(vrfName)
+              .setSrcVrfRouteDistinguisher(rd)
+              .setAttachRouteTargets(exportRt)
+              .build();
+      getOrInitVrfLeakConfig(defaultVrf).addBgpv4ToEvpnVrfLeakConfig(bgpv4ToEvpnConfig);
+
+      // Create EvpnToBgpv4VrfLeakConfig: import EVPN type-5 routes into tenant VRF's BGPv4
+      // Generate an import policy that matches the VRF's import route-target
+      ExtendedCommunity importRt = exportRt; // by default, import RT = export RT for symmetric IRB
+      RoutingPolicy importPolicy =
+          RoutingPolicy.builder()
+              .setOwner(_c)
+              .setName(generatedEvpnToBgpv4VrfLeakPolicyName(vrfName))
+              .addStatement(
+                  // Only import EVPN routes that match this VRF's import route target
+                  new If(
+                      new MatchCommunities(
+                          InputCommunities.instance(),
+                          new HasCommunity(new CommunityIs(importRt))),
+                      ImmutableList.of(Statements.ReturnTrue.toStaticStatement())))
+              .addStatement(Statements.ReturnFalse.toStaticStatement())
+              .build();
+      getOrInitVrfLeakConfig(tenantVrf)
+          .addEvpnToBgpv4VrfLeakConfig(
+              EvpnToBgpv4VrfLeakConfig.builder()
+                  .setImportFromVrf(Configuration.DEFAULT_VRF_NAME)
+                  .setImportPolicy(importPolicy.getName())
+                  .build());
+    }
+  }
+
+  /** Weight for locally originated VRF-leaked routes, consistent with standard BGP convention. */
+  @VisibleForTesting static final int EVPN_IPR_VRF_LEAK_WEIGHT = 32768;
+
+  /**
+   * Compute the set of import RTs for a routing-instance. Uses vrf-target import if set, otherwise
+   * falls back to the bidirectional vrf-target community.
+   */
+  @VisibleForTesting
+  static @Nonnull Set<ExtendedCommunity> getImportRts(RoutingInstance ri) {
+    if (ri.getVrfTargetImport() != null) {
+      return ImmutableSet.of(ri.getVrfTargetImport());
+    }
+    if (ri.getVrfTargetCommunity() != null) {
+      return ImmutableSet.of(ri.getVrfTargetCommunity());
+    }
+    return ImmutableSet.of();
+  }
+
+  /**
+   * Compute the set of export RTs for a routing-instance. Uses vrf-target export if set, otherwise
+   * falls back to the bidirectional vrf-target community.
+   */
+  @VisibleForTesting
+  static @Nonnull Set<ExtendedCommunity> getExportRts(RoutingInstance ri) {
+    if (ri.getVrfTargetExport() != null) {
+      return ImmutableSet.of(ri.getVrfTargetExport());
+    }
+    if (ri.getVrfTargetCommunity() != null) {
+      return ImmutableSet.of(ri.getVrfTargetCommunity());
+    }
+    return ImmutableSet.of();
+  }
+
+  /** Generated redistribution policy name for EVPN ip-prefix-routes in a VRF. */
+  @VisibleForTesting
+  static @Nonnull String generatedEvpnIprRedistPolicyName(String vrfName) {
+    return String.format("~EVPN_IPR_REDISTRIBUTION:%s~", vrfName);
+  }
+
+  /** Generated deny-all redistribution policy name for VRFs without explicit redistribution. */
+  @VisibleForTesting
+  static @Nonnull String generatedEvpnIprDenyAllRedistPolicyName(String vrfName) {
+    return String.format("~EVPN_IPR_DENY_ALL_REDISTRIBUTION:%s~", vrfName);
+  }
+
+  /**
+   * Create a redistribution policy for EVPN ip-prefix-routes in a tenant VRF. The policy
+   * redistributes connected routes into BGP, optionally filtered/modified by the per-RI export
+   * policy (e.g., {@code protocols evpn ip-prefix-routes export SET_MAP}).
+   */
+  private void createEvpnIprRedistributionPolicy(
+      RoutingInstance ri, EvpnIpPrefixRoutes ipr, String policyName) {
+    ImmutableList.Builder<Statement> stmts = ImmutableList.builder();
+
+    // Set origin type to IGP for connected routes
+    stmts.add(
+        new If(
+            new MatchProtocol(RoutingProtocol.CONNECTED),
+            ImmutableList.of(new SetOrigin(new LiteralOrigin(OriginType.IGP, null)))));
+
+    // Set weight for locally originated routes
+    stmts.add(new SetWeight(new LiteralInt(EVPN_IPR_VRF_LEAK_WEIGHT)));
+
+    // Match connected routes, optionally apply per-RI export policy
+    ImmutableList.Builder<BooleanExpr> conditions = ImmutableList.builder();
+    conditions.add(new MatchProtocol(RoutingProtocol.CONNECTED));
+    String exportPolicy = ipr.getExportPolicy();
+    if (exportPolicy != null && _c.getRoutingPolicies().containsKey(exportPolicy)) {
+      conditions.add(new CallExpr(exportPolicy));
+    }
+    stmts.add(
+        new If(
+            new Conjunction(conditions.build()),
+            ImmutableList.of(Statements.ExitAccept.toStaticStatement())));
+
+    // Default reject
+    stmts.add(Statements.ExitReject.toStaticStatement());
+
+    RoutingPolicy.builder()
+        .setOwner(_c)
+        .setName(policyName)
+        .setStatements(stmts.build())
+        .build();
+  }
+
+  /**
+   * Set up EVPN type-5 (ip-prefix-routes) VRF leaking through the full EVPN pipeline.
+   *
+   * <p>For each routing-instance with per-RI {@code protocols evpn ip-prefix-routes} and a VNI:
+   *
+   * <ul>
+   *   <li><b>Exporters</b> (RIs with export RTs): Create a BGP process with connected
+   *       redistribution, a {@link Layer3Vni} on the tenant VRF, and a {@link
+   *       Bgpv4ToEvpnVrfLeakConfig} on the default VRF to export the tenant VRF's BGPv4 routes as
+   *       EVPN type-5.
+   *   <li><b>Importers</b> (RIs with import RTs): Create an {@link EvpnToBgpv4VrfLeakConfig} on
+   *       the importing VRF with a policy matching the import route-target, and a minimal BGP
+   *       process to hold the leaked routes.
+   * </ul>
+   *
+   * <p>This follows the same EVPN type-5 pipeline as Arista/NX-OS: tenant VRF BGPv4 →
+   * Bgpv4ToEvpnVrfLeakConfig → default VRF EVPN type-5 → EvpnToBgpv4VrfLeakConfig → importing VRF
+   * BGPv4.
+   */
+  @VisibleForTesting
+  void convertEvpnIprVrfLeaking() {
+    Map<String, RoutingInstance> routingInstances = _masterLogicalSystem.getRoutingInstances();
+    Vrf defaultVrf = _c.getDefaultVrf();
+    if (defaultVrf == null) {
+      return;
+    }
+
+    boolean hasEvpnIprLeaking = false;
+
+    // Phase 1: Set up exporters — RIs with per-RI ip-prefix-routes + VNI + export RTs
+    for (RoutingInstance ri : routingInstances.values()) {
+      EvpnIpPrefixRoutes ipr = ri.getEvpnIpPrefixRoutes();
+      if (ipr == null || ipr.getVni() == null) {
+        continue;
+      }
+      Set<ExtendedCommunity> exportRts = getExportRts(ri);
+      if (exportRts.isEmpty()) {
+        continue;
+      }
+      String vrfName = ri.getName();
+      Vrf tenantVrf = _c.getVrfs().get(vrfName);
+      if (tenantVrf == null || vrfName.equals(Configuration.DEFAULT_VRF_NAME)) {
+        continue;
+      }
+
+      hasEvpnIprLeaking = true;
+
+      // Create Layer3Vni on tenant VRF (required by dataplane for Bgpv4→EVPN leak)
+      tenantVrf.addLayer3Vni(
+          Layer3Vni.builder().setVni(ipr.getVni()).setSrcVrf(vrfName).build());
+
+      // Create BGP process with connected redistribution if not already present.
+      // If a BGP process already exists (from createBgpProcess for a VRF with BGP peers),
+      // add a redistribution policy to it so connected routes enter the BGP RIB for
+      // getRoutesToLeak() / EVPN type-5 origination.
+      String redistPolicyName = generatedEvpnIprRedistPolicyName(vrfName);
+      createEvpnIprRedistributionPolicy(ri, ipr, redistPolicyName);
+      if (tenantVrf.getBgpProcess() == null) {
+        BgpProcess proc =
+            bgpProcessBuilder()
+                .setRouterId(getRouterId(ri))
+                .setRedistributionPolicy(redistPolicyName)
+                .build();
+        tenantVrf.setBgpProcess(proc);
+      } else if (tenantVrf.getBgpProcess().getRedistributionPolicy() == null) {
+        tenantVrf.getBgpProcess().setRedistributionPolicy(redistPolicyName);
+      }
+
+      // Determine route distinguisher for the VRF
+      ExtendedCommunity exportRt = exportRts.iterator().next();
+      RouteDistinguisher rd = ri.getRouteDistinguisher();
+      if (rd == null) {
+        // Fall back to route-distinguisher-id + VNI
+        Ip rdId = ri.getRouteDistinguisherId();
+        if (rdId != null) {
+          rd = RouteDistinguisher.from(rdId, ipr.getVni());
+        }
+      }
+      if (rd == null) {
+        continue; // Cannot create leak config without RD
+      }
+
+      // Create Bgpv4ToEvpnVrfLeakConfig on default VRF
+      Bgpv4ToEvpnVrfLeakConfig leakConfig =
+          Bgpv4ToEvpnVrfLeakConfig.builder()
+              .setImportFromVrf(vrfName)
+              .setSrcVrfRouteDistinguisher(rd)
+              .setAttachRouteTargets(exportRt)
+              .build();
+      getOrInitVrfLeakConfig(defaultVrf).addBgpv4ToEvpnVrfLeakConfig(leakConfig);
+    }
+
+    // Phase 2: Set up importers — RIs with import RTs
+    for (RoutingInstance ri : routingInstances.values()) {
+      Set<ExtendedCommunity> importRts = getImportRts(ri);
+      if (importRts.isEmpty()) {
+        continue;
+      }
+      String vrfName = ri.getName();
+      Vrf tenantVrf = _c.getVrfs().get(vrfName);
+      if (tenantVrf == null || vrfName.equals(Configuration.DEFAULT_VRF_NAME)) {
+        continue;
+      }
+
+      hasEvpnIprLeaking = true;
+
+      // Create import policy matching import RTs
+      ExtendedCommunity importRt = importRts.iterator().next();
+      String importPolicyName = generatedEvpnToBgpv4VrfLeakPolicyName(vrfName);
+      if (!_c.getRoutingPolicies().containsKey(importPolicyName)) {
+        RoutingPolicy.builder()
+            .setOwner(_c)
+            .setName(importPolicyName)
+            .addStatement(
+                new If(
+                    new MatchCommunities(
+                        InputCommunities.instance(),
+                        new HasCommunity(new CommunityIs(importRt))),
+                    ImmutableList.of(Statements.ReturnTrue.toStaticStatement())))
+            .addStatement(Statements.ReturnFalse.toStaticStatement())
+            .build();
+      }
+
+      // Create EvpnToBgpv4VrfLeakConfig on this VRF
+      getOrInitVrfLeakConfig(tenantVrf)
+          .addEvpnToBgpv4VrfLeakConfig(
+              EvpnToBgpv4VrfLeakConfig.builder()
+                  .setImportFromVrf(Configuration.DEFAULT_VRF_NAME)
+                  .setImportPolicy(importPolicyName)
+                  .build());
+
+      // Create minimal BGP process if not present (needed to have a BGP RIB for leaked routes)
+      if (tenantVrf.getBgpProcess() == null) {
+        BgpProcess proc = bgpProcessBuilder().setRouterId(getRouterId(ri)).build();
+        tenantVrf.setBgpProcess(proc);
+      }
+    }
+
+    // Phase 3 is no longer needed. Tenant VRFs already have per-VRF redistribution policies
+    // (created in Phase 1) that populate their BGP RIBs with connected routes for
+    // getRoutesToLeak() / EVPN type-5 origination. The BgpRoutingProcess.redistribute() method
+    // now supports per-VRF redistribution without the device-wide exportBgpFromBgpRib flag,
+    // which would break the default VRF's JunOS-style export policy evaluation (protocol direct).
   }
 
   private @Nullable Integer computeAccessVlan(String ifaceName, List<VlanMember> vlanMembers) {
@@ -3775,6 +4338,15 @@ public final class JuniperConfiguration extends VendorConfiguration {
         _c.getSnmpTrapServers().addAll(snmpServer.getHosts().keySet());
       }
 
+      // convert l2vni for l2vniproperties.
+      convertL2Vni();
+
+      // convert l3vni for l3vniproperties.
+      convertL3Vni();
+
+      // convert EVPN VRF leaking for type-5 (IP prefix) routes
+      convertEvpnVrfLeaking();
+
       // static routes
       for (StaticRouteV4 route : ri.getRibs().get(RIB_IPV4_UNICAST).getStaticRoutes().values()) {
         vrf.getStaticRoutes().addAll(toStaticRoutes(route));
@@ -3884,6 +4456,10 @@ public final class JuniperConfiguration extends VendorConfiguration {
       convertResolution(ri);
     }
 
+    // Convert EVPN ip-prefix-routes cross-VRF leaking based on RT import/export.
+    // This must run after all VRFs exist and routing policies have been converted.
+    convertEvpnIprVrfLeaking();
+
     // static nats
     if (_masterLogicalSystem.getNatStatic() != null) {
       _w.unimplemented("Static NAT is not currently implemented");
@@ -3896,9 +4472,6 @@ public final class JuniperConfiguration extends VendorConfiguration {
     warnEmptyPrefixLists();
 
     _c.computeRoutingPolicySources(_w);
-
-    // convert vxlan.
-    convertVxlan();
 
     return _c;
   }
@@ -4210,6 +4783,7 @@ public final class JuniperConfiguration extends VendorConfiguration {
                         String name = newUnitInterface.getName();
                         // set IRB VLAN ID if assigned
                         newUnitInterface.setVlan(irbVlanIds.get(name));
+
                         if (unit.getType() == InterfaceType.IRB_UNIT
                             && newUnitInterface.getVlan() == null) {
                           // TODO: May still be active if part of a bridge, though maybe it still

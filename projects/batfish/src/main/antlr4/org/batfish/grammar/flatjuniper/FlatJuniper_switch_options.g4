@@ -13,10 +13,21 @@ s_switch_options
       so_interface
       | so_vtep_source_interface
       | so_route_distinguisher
-      | so_vrf_target
       | so_vrf_export
       | so_vrf_import
-    )
+      | so_vrf_target
+      | so_vtep_source_interface
+   )
+;
+
+so_vrf_target:
+   VRF_TARGET
+        (
+          sovt_auto
+          | sovt_community
+          | sovt_export
+          | sovt_import
+        )
 ;
 
 so_vtep_source_interface
@@ -29,19 +40,34 @@ so_route_distinguisher
   ROUTE_DISTINGUISHER route_distinguisher
 ;
 
-so_vrf_target
+sovt_auto
 :
-  VRF_TARGET null_filler
+  AUTO
+;
+
+sovt_community
+:
+   extended_community
+;
+
+sovt_export
+:
+   EXPORT extended_community
+;
+
+sovt_import
+:
+   IMPORT extended_community
 ;
 
 so_vrf_export
 :
-  VRF_EXPORT null_filler
+   VRF_EXPORT name = junos_name
 ;
 
 so_vrf_import
 :
-  VRF_IMPORT null_filler
+   VRF_IMPORT name = junos_name
 ;
 
 so_interface
